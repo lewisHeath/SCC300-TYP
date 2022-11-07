@@ -6,6 +6,7 @@ import jabs.scenario.AbstractScenario;
 import jabs.scenario.BitcoinGlobalNetworkScenario;
 import jabs.scenario.NormalEthereumNetworkScenario;
 import jabs.scenario.PBFTLANScenario;
+import jabs.scenario.ShardedPBFTScenario;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -24,6 +25,7 @@ public class Main {
         // Simulate one day in the life of Bitcoin network
         // Nakamoto protocol with block every 600 seconds
         // Around 8000 nodes with 30 miners
+        /*
         scenario = new BitcoinGlobalNetworkScenario("One day in the life of Bitcoin", 1,
                 86400, 600, 6);
         scenario.AddNewLogger(new BlockConfirmationLogger(Paths.get("output/bitcoin-confirmations-log.csv")));
@@ -47,11 +49,24 @@ public class Main {
         scenario.AddNewLogger(new FinalUncleBlocksLogger(
                 Paths.get("output/ethereum-uncle-rate.csv")));
         scenario.run();
+        */
 
         // Simulate PBFT Lan network of 40 nodes for 1 hour
-        scenario = new PBFTLANScenario("One hour of a PBFT lan Network", 1,
-                40, 3600);
-        scenario.AddNewLogger(new BlockGenerationLogger(Paths.get("output/pbft-simulation-log.csv")));
+        // scenario = new PBFTLANScenario("One hour of a PBFT lan Network", 1,
+        //         40, 3600);
+        // scenario.AddNewLogger(new BlockGenerationLogger(Paths.get("output/pbft-simulation-log.csv")));
+        // // scenario.AddNewLogger(new PBFTCSVLogger(Paths.get("output/pbft-CSV-log.csv")));
+        // scenario.AddNewLogger(new AllPassedMessagesLogger(Paths.get("output/pbft-messages-log-log.csv")));
+        // scenario.AddNewLogger(new BlockDeliveryLogger(Paths.get("output/pbft-delivery-log.csv")));
+        // scenario.run();
+
+        /* SHARDED TESTING */
+        scenario = new ShardedPBFTScenario("sharded PBFT scenario (2 shards, 20 nodes per shard) ", 1, 2, 20, 3600);
+        // scenario.AddNewLogger(new AllPassedMessagesLogger(Paths.get("output/pbft-sharded-messages-log.csv")));
+        scenario.AddNewLogger(new BlockDeliveryLogger(Paths.get("output/sharded-pbft-block-delivery-log.csv")));
+        scenario.run();
+
+        scenario = new ShardedPBFTScenario("sharded PBFT scenario (10 shards, 10 nodes per shard)", 1, 10, 10, 3600);
         scenario.run();
     }
 }

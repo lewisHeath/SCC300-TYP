@@ -74,6 +74,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                         this.localBlockTree.add(block);
                     }
                     if (this.localBlockTree.getLocalBlock(block).isConnectedToGenesis) {
+                        // System.out.println("block connected to genesis");
                         this.pbftPhase = PBFTPhase.PREPARING;
                         this.peerBlockchainNode.broadcastMessage(
                                 new VoteMessage(
@@ -98,27 +99,29 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                 votes.put(block, new HashMap<>());
             }
             votes.get(block).put(vote.getVoter(), vote);
-            if (votes.get(block).size() > (((numAllParticipants / 3) * 2) + 1)) {
+            if (votes.get(block).size() > (((numAllParticipants / 3) * 2) + 1)) { // if over 2 thirds voted in favour
                 blocks.add(block);
                 this.pbftPhase = nextStep;
-                switch (nextStep) {
-                    case PRE_PREPARING:
+                switch (nextStep) { // depending on what the next step is do different things
+                    case PRE_PREPARING: // if THIS stage is commit
                         this.currentViewNumber += 1;
                         this.currentMainChainHead = block;
                         updateChain();
-                        if (this.peerBlockchainNode.nodeID == this.getCurrentPrimaryNumber()){
+                        // System.out.println("checking if i can make a new block");
+                        if ((this.peerBlockchainNode.nodeID) % numAllParticipants == this.getCurrentPrimaryNumber()){ // IF IT IS THIS NODES TIME TO MAKE A BLOCK, MAKE ONE
+                            // System.out.println("Node ID: " + this.peerBlockchainNode.nodeID + " making a block");
                             this.peerBlockchainNode.broadcastMessage(
                                     new VoteMessage(
                                             new PBFTPrePrepareVote<>(this.peerBlockchainNode,
                                                     BlockFactory.samplePBFTBlock(peerBlockchainNode.getSimulator(),
                                                             peerBlockchainNode.getNetwork().getRandom(),
-                                                            (PBFTNode) this.peerBlockchainNode, (PBFTBlock) block)
+                                                            this.peerBlockchainNode, (PBFTBlock) block)
                                             )
                                     )
                             );
                         }
                         break;
-                    case COMMITTING:
+                    case COMMITTING: // if THIS stage is prepare
                         this.peerBlockchainNode.broadcastMessage(
                                 new VoteMessage(
                                         new PBFTCommitVote<>(this.peerBlockchainNode, block)
@@ -132,7 +135,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
 
     @Override
     public void newIncomingBlock(B block) {
-
+        // TODO: needs implementing
     }
 
     /**

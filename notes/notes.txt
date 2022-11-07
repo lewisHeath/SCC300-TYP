@@ -1,0 +1,9 @@
+- create PBFTShardedNetwork
+- create PBFTShardedP2PConnections
+	- only connect to same shard
+- create PBFTShardedScenario
+	- insertInitialEvents() loops through shards
+
+// currently stuck at a point where the scenario runs quick and blocks arent being made
+need to look at the view number and nodeID
+- nodes arent making blocks after the first one

@@ -6,6 +6,7 @@ import jabs.ledgerdata.pbft.PBFTBlock;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ethereum.EthereumMinerNode;
 import jabs.network.node.nodes.pbft.PBFTNode;
+import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.simulator.randengine.RandomnessEngine;
 import jabs.simulator.Simulator;
 
@@ -53,6 +54,12 @@ public final class BlockFactory {
     }
 
     public static PBFTBlock samplePBFTBlock(Simulator simulator, RandomnessEngine randomnessEngine, PBFTNode creator, PBFTBlock parent) {
+        return new PBFTBlock(sampleBitcoinBlockSize(randomnessEngine), parent.getHeight() + 1,
+                simulator.getSimulationTime(), creator, parent); // TODO: Size of PBFT Blocks
+    }
+
+    public static PBFTBlock samplePBFTBlock(Simulator simulator, RandomnessEngine randomnessEngine, Node creator,
+            PBFTBlock parent) {
         return new PBFTBlock(sampleBitcoinBlockSize(randomnessEngine), parent.getHeight() + 1,
                 simulator.getSimulationTime(), creator, parent); // TODO: Size of PBFT Blocks
     }
