@@ -99,7 +99,7 @@ public abstract class AbstractScenario {
      * @throws IOException
      */
     public void run() throws IOException {
-        System.err.printf("Staring %s...\n", this.name);
+        System.err.printf("Starting %s...\n", this.name);
         this.createNetwork();
         this.insertInitialEvents();
 

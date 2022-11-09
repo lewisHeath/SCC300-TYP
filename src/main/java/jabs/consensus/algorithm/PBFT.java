@@ -4,8 +4,10 @@ import jabs.consensus.blockchain.LocalBlockTree;
 import jabs.ledgerdata.*;
 import jabs.ledgerdata.pbft.*;
 import jabs.network.message.VoteMessage;
+import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTNode;
+import jabs.network.node.nodes.pbft.PBFTShardedNode;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,7 +110,14 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                         this.currentMainChainHead = block;
                         updateChain();
                         // System.out.println("checking if i can make a new block");
-                        if ((this.peerBlockchainNode.nodeID) % numAllParticipants == this.getCurrentPrimaryNumber()){ // IF IT IS THIS NODES TIME TO MAKE A BLOCK, MAKE ONE
+                        // get the shard that this node is in
+                        int ID = this.peerBlockchainNode.nodeID;
+                        if(this.peerBlockchainNode instanceof PBFTShardedNode) {
+                            PBFTShardedNode pbftShardedNode = (PBFTShardedNode) this.peerBlockchainNode;
+                            int shardNumber = pbftShardedNode.getShardNumber();
+                            ID = ((PBFTShardedNetwork) pbftShardedNode.getNetwork()).getIndexOfNode(pbftShardedNode, shardNumber);
+                        }
+                        if (ID == this.getCurrentPrimaryNumber()){ // IF IT IS THIS NODES TIME TO MAKE A BLOCK, MAKE ONE
                             // System.out.println("Node ID: " + this.peerBlockchainNode.nodeID + " making a block");
                             this.peerBlockchainNode.broadcastMessage(
                                     new VoteMessage(
@@ -135,7 +144,6 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
 
     @Override
     public void newIncomingBlock(B block) {
-        // TODO: needs implementing
     }
 
     /**

@@ -69,4 +69,13 @@ public class PBFTShardedNetwork extends Network<PBFTShardedNode, SingleNodeType>
         // System.out.println("size of shard(" + shardNumber + ") in getShard() method: " + shards.get(shardNumber).size());
         return this.shards.get(shardNumber);
     }
+
+    public int getIndexOfNode(PBFTShardedNode node, int shardNumber) {
+        // loop through the shard and get the index of the node
+        for (int i = 0; i < shards.get(shardNumber).size(); i++){
+            if (shards.get(shardNumber).get(i).equals(node)){
+                return i;
+            }
+        } return -1;
+    }
 }
