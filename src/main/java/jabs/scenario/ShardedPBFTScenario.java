@@ -38,8 +38,7 @@ public class ShardedPBFTScenario extends PBFTLANScenario {
             // System.out.println("broadcasting genesis block from node ID: " + node.nodeID);
             node.broadcastMessage(
                     new VoteMessage(
-                            new PBFTPrePrepareVote<>(node,
-                                    BlockFactory.samplePBFTBlock(simulator, network.getRandom(), node, PBFT_GENESIS_BLOCK)
+                            new PBFTPrePrepareVote<>(node, node.createBlock()
                                 )
                         )
                     );
