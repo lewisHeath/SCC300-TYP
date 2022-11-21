@@ -1,28 +1,30 @@
 package jabs.scenario;
 
 import jabs.consensus.config.PBFTConsensusConfig;
-import jabs.ledgerdata.BlockFactory;
 import jabs.ledgerdata.pbft.PBFTPrePrepareVote;
 import jabs.network.message.VoteMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 
-import static jabs.network.node.nodes.pbft.PBFTShardedNode.PBFT_GENESIS_BLOCK;
 
 import java.util.ArrayList;
 
-public class ShardedPBFTScenario extends PBFTLANScenario {
+public class ShardedPBFTScenario extends AbstractScenario {
+    protected int nodesPerShard;
+    protected int simulationStopTime;
     protected int numberOfShards;
 
     public ShardedPBFTScenario(String name, long seed, int numberOfShards, int nodesPerShard,
             double simulationStopTime) {
-        super(name, seed, nodesPerShard, simulationStopTime);
+        super(name, seed);
         this.numberOfShards = numberOfShards;
+        this.nodesPerShard = nodesPerShard;
+        this.simulationStopTime = (int) simulationStopTime;
     }
 
     @Override
     public void createNetwork() {
-        network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, numNodes);
+        network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard);
         network.populateNetwork(simulator, new PBFTConsensusConfig());
     }
 
@@ -38,11 +40,15 @@ public class ShardedPBFTScenario extends PBFTLANScenario {
             // System.out.println("broadcasting genesis block from node ID: " + node.nodeID);
             node.broadcastMessage(
                     new VoteMessage(
-                            new PBFTPrePrepareVote<>(node,
-                                    BlockFactory.samplePBFTBlock(simulator, network.getRandom(), node, PBFT_GENESIS_BLOCK)
+                            new PBFTPrePrepareVote<>(node, node.createBlock()
                                 )
                         )
                     );
         }
+    }
+
+    @Override
+    public boolean simulationStopCondition() {
+        return (simulator.getSimulationTime() > this.simulationStopTime);
     }
 }

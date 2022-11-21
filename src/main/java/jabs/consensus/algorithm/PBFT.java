@@ -103,6 +103,11 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
             votes.get(block).put(vote.getVoter(), vote);
             if (votes.get(block).size() > (((numAllParticipants / 3) * 2) + 1)) { // if over 2 thirds voted in favour
                 blocks.add(block);
+                // remove those transactions from the mempool
+                if (this.peerBlockchainNode instanceof PBFTShardedNode) {
+                    PBFTShardedNode pbftShardedNode = (PBFTShardedNode) this.peerBlockchainNode;
+                    pbftShardedNode.removeTransactionsFromMempool((PBFTBlock) block);
+                }
                 this.pbftPhase = nextStep;
                 switch (nextStep) { // depending on what the next step is do different things
                     case PRE_PREPARING: // if THIS stage is commit
@@ -121,10 +126,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                             // System.out.println("Node ID: " + this.peerBlockchainNode.nodeID + " making a block");
                             this.peerBlockchainNode.broadcastMessage(
                                     new VoteMessage(
-                                            new PBFTPrePrepareVote<>(this.peerBlockchainNode,
-                                                    BlockFactory.samplePBFTBlock(peerBlockchainNode.getSimulator(),
-                                                            peerBlockchainNode.getNetwork().getRandom(),
-                                                            this.peerBlockchainNode, (PBFTBlock) block)
+                                            new PBFTPrePrepareVote<>(this.peerBlockchainNode, ((PBFTShardedNode)this.peerBlockchainNode).createBlock()
                                             )
                                     )
                             );
