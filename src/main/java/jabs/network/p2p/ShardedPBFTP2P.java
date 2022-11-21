@@ -6,6 +6,7 @@ import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 
 public class ShardedPBFTP2P extends AbstractP2PConnections {
+
     @Override
     public void connectToNetwork(Network network) {
         int shardNumber = ((PBFTShardedNode)node).getShardNumber();
@@ -15,6 +16,7 @@ public class ShardedPBFTP2P extends AbstractP2PConnections {
 
     public void connectToNetwork(PBFTShardedNetwork network, int shardNumber){
         // System.out.println("Calling from p2p");
+        // add all of the shard members to the p2p connections
         this.neighbors.addAll(network.getShard(shardNumber));
         node.getNodeNetworkInterface().connectNetwork(network, network.getRandom());
     }

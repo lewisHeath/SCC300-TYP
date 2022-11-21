@@ -1,31 +1,42 @@
 package jabs.network.networks.sharded;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import jabs.consensus.config.ConsensusAlgorithmConfig;
+import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.network.networks.Network;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.network.stats.eightysixcountries.EightySixCountries;
+import jabs.network.stats.eightysixcountries.GlobalNetworkStats86Countries;
 import jabs.network.stats.lan.LAN100MNetworkStats;
 import jabs.network.stats.lan.SingleNodeType;
+import jabs.network.stats.sixglobalregions.SixRegions;
 import jabs.simulator.Simulator;
 import jabs.simulator.randengine.RandomnessEngine;
 
-public class PBFTShardedNetwork extends Network<PBFTShardedNode, SingleNodeType> {
+public class PBFTShardedNetwork extends Network<PBFTShardedNode, EightySixCountries> {
 
     private int numberOfShards;
     private int nodesPerShard;
     private final ArrayList<ArrayList<PBFTShardedNode>> shards = new ArrayList<ArrayList<PBFTShardedNode>>();
+    // mapping of ethereum accounts to shards
+    private HashMap<EthereumAccount, Integer> accountToShard = new HashMap<EthereumAccount, Integer>();
+    public int intraShardTransactions = 0;
+    public int crossShardTransactions = 0;
 
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard) {
-        super(randomnessEngine, new LAN100MNetworkStats(randomnessEngine));
+        super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
+        this.accountToShard = new HashMap<EthereumAccount, Integer>();
+        this.generateAccounts(1000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
         return new PBFTShardedNode(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE),
-                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
+                this.sampleDownloadBandwidth(EightySixCountries.UNITED_KINGDOM),
+                this.sampleUploadBandwidth(EightySixCountries.UNITED_KINGDOM),
                 numNodesInShard, shardNumber);
     }
 
@@ -62,7 +73,7 @@ public class PBFTShardedNetwork extends Network<PBFTShardedNode, SingleNodeType>
      */
     @Override
     public void addNode(PBFTShardedNode node) {
-        this.addNode(node, SingleNodeType.LAN_NODE);
+        this.addNode(node, EightySixCountries.UNITED_KINGDOM);
     }
 
     public ArrayList<PBFTShardedNode> getShard(int shardNumber){
@@ -77,5 +88,37 @@ public class PBFTShardedNetwork extends Network<PBFTShardedNode, SingleNodeType>
                 return i;
             }
         } return -1;
+    }
+
+    private void generateAccounts(int numOfAccounts) {
+        // generate lots of random ethereum accounts
+        for(int i = 0; i < numOfAccounts; i++){
+            // generate random shard number
+            int shardNumber = this.getRandom().nextInt(numberOfShards);
+            EthereumAccount account = new EthereumAccount(shardNumber, i);
+            // add the account to the network
+            this.addAccount(account, shardNumber);
+        }
+    }
+
+    public void addAccount(EthereumAccount account, int shardNumber) {
+        // add the account to the shard
+        this.accountToShard.put(account, shardNumber);
+    }
+
+    public int getAccountShard(EthereumAccount account) {
+        return accountToShard.get(account);
+    }
+
+    public EthereumAccount getRandomAccount() {
+        // get a random account from the network
+        int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
+        return (EthereumAccount) accountToShard.keySet().toArray()[randomAccountIndex];
+    }
+
+    public PBFTShardedNode getRandomNodeInShard(int shardNumber) {
+        // get a random node from the shard
+        int randomNodeIndex = this.getRandom().nextInt(shards.get(shardNumber).size());
+        return shards.get(shardNumber).get(randomNodeIndex);
     }
 }

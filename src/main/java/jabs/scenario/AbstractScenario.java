@@ -2,6 +2,7 @@ package jabs.scenario;
 
 import jabs.log.AbstractLogger;
 import jabs.network.networks.Network;
+import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.simulator.event.Event;
 import jabs.simulator.randengine.RandomnessEngine;
 import jabs.simulator.Simulator;
@@ -133,6 +134,9 @@ public abstract class AbstractScenario {
         for (AbstractLogger logger:this.loggers) {
             logger.finalLog();
         }
+
+        System.out.println("Intra shard transactions: " + ((PBFTShardedNetwork)this.network).intraShardTransactions);
+        System.out.println("Cross shard transactions: " + ((PBFTShardedNetwork)this.network).crossShardTransactions);
 
         System.err.printf("Finished %s.\n", this.name);
     }
