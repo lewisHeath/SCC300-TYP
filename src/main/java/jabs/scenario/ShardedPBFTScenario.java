@@ -4,6 +4,7 @@ import jabs.consensus.config.PBFTConsensusConfig;
 import jabs.ledgerdata.pbft.PBFTPrePrepareVote;
 import jabs.network.message.VoteMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
+import jabs.network.node.nodes.ShardedClient;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 
 
@@ -30,6 +31,11 @@ public class ShardedPBFTScenario extends AbstractScenario {
 
     @Override
     protected void insertInitialEvents() {
+        // tell all of the clients to send the transactions to the correct shards
+        ArrayList<ShardedClient> clients = ((PBFTShardedNetwork) network).getClients();
+        for (ShardedClient client : clients) {
+            // client.sendAllTransactions();
+        }
         // get the first node in each shard and broadcast genesis block
         for (int i = 0; i < numberOfShards; i++) {
             // PBFTShardedNode node = ((PBFTShardedNetwork) network).getShard(i).get(0);

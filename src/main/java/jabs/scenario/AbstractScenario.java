@@ -138,6 +138,11 @@ public abstract class AbstractScenario {
         System.out.println("Intra shard transactions: " + ((PBFTShardedNetwork)this.network).intraShardTransactions);
         System.out.println("Cross shard transactions: " + ((PBFTShardedNetwork)this.network).crossShardTransactions);
 
+        System.out.println("Client intra shard transactions: " + ((PBFTShardedNetwork)this.network).clientIntraShardTransactions);
+        System.out.println("Client cross shard transactions: " + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions);
+
+        System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
+
         System.err.printf("Finished %s.\n", this.name);
     }
 }

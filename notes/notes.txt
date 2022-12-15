@@ -1,1 +1,6 @@
-- create VoteMessage logger for PBFT
+- nodes need to be able to recognise when a recipt is the crediting recipt, then the clients can tell the shards to unlock the accounts
+- seperate classes need to be made so i can pass the blocks to them and they will either handle the cross shard transaction client-led or shard-led
+- random regions need to be given to the nodes and clients rather than all with united kingdom latency
+- all nodes in a shard share the same mempool will make it easier to manage
+- should the action of locking an account be a transaction or a block?
+- should the action of unlocking an account be a transaction or a block?

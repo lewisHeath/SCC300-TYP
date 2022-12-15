@@ -31,4 +31,13 @@ public class EthereumTx extends Tx<EthereumTx> {
     public void setReceiver(EthereumAccount receiver) {
         this.receiver = receiver;
     }
+
+    // @Override
+    // public int hashCode() {
+    //     // create a hash
+    //     // hash is the sender account number and the receiver account number
+    //     // this is a very simple hash function
+    //     // if the receiver is null treat it as -1
+    //     return (int) (this.sender.getAccountNumber() + (this.receiver == null ? -1 : this.receiver.getAccountNumber()));
+    // }
 }

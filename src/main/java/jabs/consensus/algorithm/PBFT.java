@@ -2,6 +2,8 @@ package jabs.consensus.algorithm;
 
 import jabs.consensus.blockchain.LocalBlockTree;
 import jabs.ledgerdata.*;
+import jabs.ledgerdata.Sharding.Recipt;
+import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.ledgerdata.pbft.*;
 import jabs.network.message.VoteMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
@@ -9,6 +11,7 @@ import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTNode;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -84,6 +87,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                                 )
                         );
                     }
+                    // else request the missing blocks? (this would happen after shard shuffle)
                     break;
                 case PREPARE:
                     checkVotes(blockVote, block, prepareVotes, preparedBlocks, PBFTPhase.COMMITTING);
@@ -103,17 +107,14 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
             votes.get(block).put(vote.getVoter(), vote);
             if (votes.get(block).size() > (((numAllParticipants / 3) * 2) + 1)) { // if over 2 thirds voted in favour
                 blocks.add(block);
-                // remove those transactions from the mempool
-                if (this.peerBlockchainNode instanceof PBFTShardedNode) {
-                    PBFTShardedNode pbftShardedNode = (PBFTShardedNode) this.peerBlockchainNode;
-                    pbftShardedNode.removeTransactionsFromMempool((PBFTBlock) block);
-                }
                 this.pbftPhase = nextStep;
                 switch (nextStep) { // depending on what the next step is do different things
                     case PRE_PREPARING: // if THIS stage is commit
                         this.currentViewNumber += 1;
                         this.currentMainChainHead = block;
                         updateChain();
+                        // TODO: handle the cross shard transactions in the newest block in the chain
+                        handleCrossShardTransactions();
                         // System.out.println("checking if i can make a new block");
                         // get the shard that this node is in
                         int ID = this.peerBlockchainNode.nodeID;
@@ -121,6 +122,8 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                             PBFTShardedNode pbftShardedNode = (PBFTShardedNode) this.peerBlockchainNode;
                             int shardNumber = pbftShardedNode.getShardNumber();
                             ID = ((PBFTShardedNetwork) pbftShardedNode.getNetwork()).getIndexOfNode(pbftShardedNode, shardNumber);
+                            // remove the transactions from that block from the mempool
+                            pbftShardedNode.removeTransactionsFromMempool((PBFTBlock) block);
                         }
                         if (ID == this.getCurrentPrimaryNumber()){ // IF IT IS THIS NODES TIME TO MAKE A BLOCK, MAKE ONE
                             // System.out.println("Node ID: " + this.peerBlockchainNode.nodeID + " making a block");
@@ -185,5 +188,14 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
     @Override
     protected void updateChain() {
         this.confirmedBlocks.add(this.currentMainChainHead);
+    }
+
+    private void handleCrossShardTransactions() {
+        // get the latest block in the chain as a PBFTBlock
+        PBFTBlock block = (PBFTBlock) this.currentMainChainHead;
+        // get the transactions from that block
+        ArrayList<Recipt> transactions = block.getRecipts();
+        // pass this to the handle cross shard transactions method in node
+        ((PBFTShardedNode)this.peerBlockchainNode).handleCrossShardTransactions(transactions);
     }
 }
