@@ -9,8 +9,10 @@ import jabs.network.networks.Network;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.network.stats.NodeGlobalRegionDistribution;
 import jabs.network.stats.eightysixcountries.EightySixCountries;
 import jabs.network.stats.eightysixcountries.GlobalNetworkStats86Countries;
+import jabs.network.stats.eightysixcountries.ethereum.EthereumNodeGlobalNetworkStats86Countries;
 import jabs.simulator.Simulator;
 import jabs.simulator.randengine.RandomnessEngine;
 
@@ -27,6 +29,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int clientIntraShardTransactions = 0;
     public int clientCrossShardTransactions = 0;
     public int failures = 0;
+    public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
 
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
@@ -35,13 +38,15 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.accountToShard = new HashMap<EthereumAccount, Integer>();
         this.clients = new ArrayList<ShardedClient>();
         this.generateAccounts(1000);
+        this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         // TODO: populate clients
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
+        EightySixCountries region = nodeDistribution.sampleRegion();
         return new PBFTShardedNode(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(EightySixCountries.UNITED_KINGDOM),
-                this.sampleUploadBandwidth(EightySixCountries.UNITED_KINGDOM),
+                this.sampleDownloadBandwidth(region),
+                this.sampleUploadBandwidth(region),
                 numNodesInShard, shardNumber);
     }
 
