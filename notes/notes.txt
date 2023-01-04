@@ -1,6 +1,16 @@
 - nodes need to be able to recognise when a recipt is the crediting recipt, then the clients can tell the shards to unlock the accounts
 - seperate classes need to be made so i can pass the blocks to them and they will either handle the cross shard transaction client-led or shard-led
-- random regions need to be given to the nodes and clients rather than all with united kingdom latency
+- random regions need to be given to the nodes and clients rather than all with united kingdom latency - DONE
 - all nodes in a shard share the same mempool will make it easier to manage
 - should the action of locking an account be a transaction or a block?
 - should the action of unlocking an account be a transaction or a block?
+- recipt loggers need to be made
+- account locking recipts need to be made
+
+THOUGHTS
+- each node in a shard has the same transactions in their mempool
+    - so rather than having to mess around with deleting the specific transactions they can use the amount in the block and delete that
+        amount from their mempool. (this will make it easier and have no affect on the simulation)
+    - the network will either randomly make these or read them in, then distribute them to the sender shard
+    - the sender shard will then lock the account and send proof of this to a random client, this chosen client for now will act as the coordinator
+    - they will tell the receiving shard to lock the receiving account.

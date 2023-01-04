@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import jabs.consensus.config.ConsensusAlgorithmConfig;
+import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
+import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.network.networks.Network;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
@@ -39,11 +41,11 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.clients = new ArrayList<ShardedClient>();
         this.generateAccounts(1000);
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
-        // TODO: populate clients
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
         EightySixCountries region = nodeDistribution.sampleRegion();
+        System.out.println("region of node " + nodeID + " is " + region);
         return new PBFTShardedNode(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region),
                 this.sampleUploadBandwidth(region),
@@ -51,9 +53,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     }
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
+        EightySixCountries region = nodeDistribution.sampleRegion();
         return new ShardedClient(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(EightySixCountries.UNITED_KINGDOM), 
-                this.sampleUploadBandwidth(EightySixCountries.UNITED_KINGDOM));
+                this.sampleDownloadBandwidth(region), 
+                this.sampleUploadBandwidth(region));
     }
 
     @Override
@@ -96,6 +99,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (ShardedClient client : this.clients) {
             client.getP2pConnections().connectToNetwork(this);
         }
+
+        // generate the mempools for each of the shards
+        this.generateMempools(100000);
     }
 
     /**
@@ -103,7 +109,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
      */
     @Override
     public void addNode(Node node) {
-        this.addNode(node, EightySixCountries.UNITED_KINGDOM);
+        EightySixCountries region = nodeDistribution.sampleRegion();
+        this.addNode(node, region);
     }
 
     public ArrayList<PBFTShardedNode> getShard(int shardNumber){
@@ -175,5 +182,28 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public ArrayList<PBFTShardedNode> getAllNodesFromShard(int shardNumber) {
         return this.shards.get(shardNumber);
+    }
+
+    private void generateMempools(int transactionsPerShard) {
+        // generate the amount of transactions per shard
+        for (int i = 0; i < this.shards.size(); i++) {
+            ArrayList<EthereumTx> mempool = new ArrayList<>();
+            for (int j = 0; j < transactionsPerShard; j++) {
+                // generate random transaction
+                EthereumTx tx = TransactionFactory.sampleEthereumTransaction(this.getRandom());
+                // get 2 random accounts with the sender in the correct shard
+                EthereumAccount sender = getRandomAccountFromShard(i);
+                EthereumAccount receiver = getRandomAccount();
+                tx.setSender(sender);
+                tx.setReceiver(receiver);
+                // add the transaction to the mempool
+                mempool.add(tx);
+            }
+            // add the mempool to each node in this shard
+            ArrayList<PBFTShardedNode> shard = this.shards.get(i);
+            for (PBFTShardedNode node : shard) {
+                node.setMempool(mempool);
+            }
+        }
     }
 }

@@ -41,8 +41,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.mempool = new ArrayList<>();
         this.txToSender = new HashMap<>();
         this.recipts = new ArrayList<>();
-        // fill mempool with ethereum transactions
-        fillMempool(15000);
+        System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
     @Override
@@ -254,16 +253,30 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.recipts.clear();
     }
 
+    public void setMempool(ArrayList<EthereumTx> mempool) {
+        this.mempool = mempool;
+    }
+
     public void removeTransactionsFromMempool(PBFTBlock block) {
+        // TODO: modify to use the length of transactions in block instead of looking at individual transactions
         // System.out.println("Removing transactions from mempool");
-        ArrayList<EthereumTx> txs = block.getTransactions();
-        for(int i = 0; i < txs.size(); i++) {
-            EthereumTx tx = txs.get(i);
-            if(this.mempool.contains(tx)) {
-                this.mempool.remove(tx);
-                // System.out.println("Removed transaction from mempool");
-            }
+        // ArrayList<EthereumTx> txs = block.getTransactions();
+
+        
+        int sizeOfTransactions = block.getTransactions().size();
+        // remove this many transactions from the front of the mempool
+        for (int i = 0; i < sizeOfTransactions; i++) {
+            this.mempool.remove(0);
         }
+
+
+        // for(int i = 0; i < txs.size(); i++) {
+        //     EthereumTx tx = txs.get(i);
+        //     if(this.mempool.contains(tx)) {
+        //         this.mempool.remove(tx);
+        //         // System.out.println("Removed transaction from mempool");
+        //     }
+        // }
     }
 
     /**
