@@ -13,6 +13,7 @@ import jabs.ledgerdata.Sharding.Recipt;
 import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.ledgerdata.pbft.PBFTBlock;
+import jabs.network.message.CoordinationMessage;
 import jabs.network.message.DataMessage;
 import jabs.network.message.Message;
 import jabs.network.message.Packet;
@@ -79,6 +80,10 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             // broadcast to the other peers in this shard
             // this.broadcastRecipt(recipt);
         }
+    }
+
+    public void processCoordinationMessage(CoordinationMessage message, Node from) {
+        // pass this down to the cross shard consensus algorithm TODO
     }
 
     @Override

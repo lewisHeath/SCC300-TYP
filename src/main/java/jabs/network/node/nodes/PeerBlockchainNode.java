@@ -117,6 +117,8 @@ public abstract class PeerBlockchainNode<B extends SingleParentBlock<B>, T exten
                 alreadySeenVotes.add(vote);
                 this.processNewVote(vote);
             }
+        } else if (message instanceof CoordinationMessage) {
+            ((PBFTShardedNode) this).processCoordinationMessage((CoordinationMessage) message, packet.getFrom());
         }
     }
 

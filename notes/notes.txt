@@ -28,6 +28,9 @@ JOBS
 - make the clients submit transactions, and the nodes respond with prepareOK or prepareNOTOK, then the cients commit or abort.
 - talk with supervisior on Friday about these notes and ask questions
 
+- make a new cross shard consensus layer for the sharded nodes
+    - pass the coordination messages to this layer
+
 Questions
 - do i need a beacon chain?
 - should nodes have their own copy of account -> shard mapping or always rely on asking the beacon chain?
