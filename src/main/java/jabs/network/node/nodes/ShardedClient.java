@@ -102,8 +102,8 @@ public class ShardedClient extends Node{
             // get a random node in that shard to send to (TODO: should this be all nodes?)
             PBFTShardedNode node = ((PBFTShardedNetwork)this.network).getRandomNodeInShard(shard);
             // send the transaction to the node
-            System.out.println("Sending tx from client to shard " + shard);
-            System.out.println("sender shard: " + ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()));
+            // System.out.println("Sending tx from client to shard " + shard);
+            // System.out.println("sender shard: " + ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()));
             // if it is cross shard
             if (((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()) != ((PBFTShardedNetwork)this.network).getAccountShard(tx.getReceiver())) {
                 // increase the counter in the network
@@ -112,7 +112,7 @@ public class ShardedClient extends Node{
                 // increase the counter in the network
                 ((PBFTShardedNetwork)this.network).clientIntraShardTransactions++;
             }
-            System.out.println("Node shard: " + node.getShardNumber() + " Sender shard: " + ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()));
+            // System.out.println("Node shard: " + node.getShardNumber() + " Sender shard: " + ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()));
             this.networkInterface.addToUpLinkQueue(
                 new Packet(
                     this, node, new DataMessage(tx)

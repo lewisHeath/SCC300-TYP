@@ -1,11 +1,7 @@
 package jabs;
 
-import jabs.ledgerdata.bitcoin.BitcoinBlockWithoutTx;
 import jabs.log.*;
 import jabs.scenario.AbstractScenario;
-import jabs.scenario.BitcoinGlobalNetworkScenario;
-import jabs.scenario.NormalEthereumNetworkScenario;
-import jabs.scenario.PBFTLANScenario;
 import jabs.scenario.ShardedPBFTScenario;
 
 import java.io.IOException;
@@ -24,7 +20,7 @@ public class Main {
         /* SHARDED TESTING */
         // generate a random number between 1 and 1000000
         int randomNum = 1 + (int)(Math.random() * 1000000);
-        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 2, 10, 360);
+        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 5, 10, 3600);
         scenario.AddNewLogger(new VoteLogger(Paths.get("output/sharded-pbft-block-delivery-log.csv")));
         scenario.run();
     }

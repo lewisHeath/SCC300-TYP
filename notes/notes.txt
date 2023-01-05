@@ -14,3 +14,21 @@ THOUGHTS
     - the network will either randomly make these or read them in, then distribute them to the sender shard
     - the sender shard will then lock the account and send proof of this to a random client, this chosen client for now will act as the coordinator
     - they will tell the receiving shard to lock the receiving account.
+    -- this does not work well with asynchronous network because of the way i add recipts to the mempool!!
+- 2PC client led
+    - client sends out prepare message to shards, if these shards can lock the account, they send prepareOK and lock the account, if not, they send prepareNOTOK
+    - once client receives 2/3 prepareOK from each shard, send out commit to shards which tells them to execute the transaction
+    - if the client does not receive this, it sends out abort message
+    -- i think i need a layer inside of nodes to agree using PBFT wether or not to lock the accounts!
+
+TOMORROWS JOB 5th Jan
+- add loggers for recipts and transactions
+- create prepare, prepareOK, prepareNOTOK and commit messages
+- add loggers for these messages
+- make the clients submit transactions, and the nodes respond with prepareOK or prepareNOTOK, then the cients commit or abort.
+- talk with supervisior on Friday about these notes and ask questions
+
+Questions
+- do i need a beacon chain?
+- should nodes have their own copy of account -> shard mapping or always rely on asking the beacon chain?
+- 

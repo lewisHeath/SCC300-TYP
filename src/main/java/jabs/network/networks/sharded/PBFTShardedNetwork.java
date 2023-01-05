@@ -101,7 +101,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         }
 
         // generate the mempools for each of the shards
-        this.generateMempools(100000);
+        // this.generateMempools(100000);
     }
 
     /**
