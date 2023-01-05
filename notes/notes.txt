@@ -21,7 +21,7 @@ THOUGHTS
     - if the client does not receive this, it sends out abort message
     -- i think i need a layer inside of nodes to agree using PBFT wether or not to lock the accounts!
 
-TOMORROWS JOB 5th Jan
+JOBS
 - add loggers for recipts and transactions
 - create prepare, prepareOK, prepareNOTOK and commit messages
 - add loggers for these messages
@@ -31,4 +31,20 @@ TOMORROWS JOB 5th Jan
 Questions
 - do i need a beacon chain?
 - should nodes have their own copy of account -> shard mapping or always rely on asking the beacon chain?
-- 
+
+- client led question
+    - how should the protocol be structured
+    1. 
+        - client tells sender shard to deduct money
+        - shard does that and sends proof to client and locks account
+        - client sends proof to receiver shard
+        - receiver shard credts money
+        - receiver shard informs client that it was successful
+        - client tells sender shard to unlock account
+    2. 
+        - client tells both sender and receiver shards to lock account
+        - nodes in shard add the locking operation to a block to confirm it
+        - shards tell client the accounts are locked
+        - client tells shards to commit once they have all told the client they have locked
+        - shards unlock account and debit/credit accounts in newest blocks
+        - shards tell client it was successful

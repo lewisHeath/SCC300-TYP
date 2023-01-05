@@ -54,11 +54,11 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             }
         }
         // System.out.println("Node: " + this.nodeID + " received tx " + " from Node: " + from.getNodeID() + " in shard: " + shardNumber);
-        this.mempool.add(0, tx);
+        this.mempool.add(tx);
         // broadcast to the other peers in this shard
         this.broadcastTransaction(tx, from);
         // add this transaction along with the client it was sent from to a list
-        // this.txToSender.put(tx, from);
+        this.txToSender.put(tx, from);
         // System.out.println("Mempool size: " + this.mempool.size() + " shard: " + shardNumber);
     }
 
@@ -267,11 +267,6 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     }
 
     public void removeTransactionsFromMempool(PBFTBlock block) {
-        /*
-         * this is not needed anymore because the mempool object is shared between nodes
-         * in the same shard, this does not affect simulation results but makes
-         * development easier as i had problems with removing transactions from the mempool before
-         */
         for (EthereumTx tx : block.getTransactions()) {
             this.mempool.remove(tx);
         }

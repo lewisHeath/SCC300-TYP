@@ -1,12 +1,14 @@
 package jabs.network.node.nodes;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import jabs.ledgerdata.Data;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.Sharding.Recipt;
 import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.ledgerdata.ethereum.EthereumTx;
+import jabs.network.message.CoordinationMessage;
 import jabs.network.message.DataMessage;
 import jabs.network.message.Message;
 import jabs.network.message.Packet;
@@ -19,10 +21,13 @@ import jabs.simulator.Simulator;
 public class ShardedClient extends Node{
 
     private ArrayList<EthereumTx> txs;
+    // transaction -> <shard, no of prepareOKs>
+    private HashMap<EthereumTx, HashMap<Integer, Integer>> txToShards;
 
     public ShardedClient(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
         this.txs = new ArrayList<EthereumTx>();
+        this.txToShards = new HashMap<EthereumTx, HashMap<Integer, Integer>>();
         this.fillTxPool(500);
     }
 
@@ -54,6 +59,68 @@ public class ShardedClient extends Node{
                             this, n, new DataMessage(recipt)
                         )
                     );
+                }
+            }
+        }
+        else if (message instanceof CoordinationMessage) {
+            // this is the prepareOK, prepareNOTOK and the committed message
+            // the data will be the transaction
+            Data data = ((CoordinationMessage) message).getData();
+            String type = ((CoordinationMessage) message).getType();
+            if (data instanceof EthereumTx) {
+                EthereumTx tx = (EthereumTx) data;
+                // if the transaction is in the txToShards map
+                if (txToShards.containsKey(tx)) {
+                    // get the shard the message came from
+                    int shard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender());
+                    // if the message is a prepareOK
+                    if (type.equals("prepareOK")) {
+                        // increment the number of prepareOKs for that shard
+                        txToShards.get(tx).put(shard, txToShards.get(tx).get(shard) + 1);
+                        // if the number of prepareOKs is greater than 2f for all of the shards
+                        if (txToShards.get(tx).values().stream().allMatch(x -> x > 2 * ((PBFTShardedNetwork)this.network).getF())) {
+                            // send a commit message to all nodes in the shard
+                            for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(shard)) {
+                                this.networkInterface.addToUpLinkQueue(
+                                    new Packet(
+                                        this, n, new CoordinationMessage(tx, "commit")
+                                    )
+                                );
+                            }
+                        }
+                    }
+                    // if the message is a prepareNOTOK
+                    else if (type.equals("prepareNOTOK")) {
+                        // remove the transaction from the map
+                        txToShards.remove(tx);
+                        // send a rollback message to all nodes in all concerned shards in the transaction
+                        for (int s : txToShards.get(tx).keySet()) {
+                            for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(s)) {
+                                this.networkInterface.addToUpLinkQueue(
+                                    new Packet(
+                                        this, n, new CoordinationMessage(tx, "rollback")
+                                    )
+                                );
+                            }
+                        }
+                    }
+                    // if the message is a committed
+                    else if (type.equals("committed")) {
+                        // remove the transaction from the map
+                        txToShards.remove(tx);
+                    }
+                }
+                // if the transaction is not in the map
+                else {
+                    // if the message is a prepareOK
+                    if (type.equals("prepareOK")) {
+                        // get the shard the message came from
+                        int shard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender());
+                        // add the transaction to the map with the shard and 1 prepareOK
+                        HashMap<Integer, Integer> shardToPrepareOKs = new HashMap<Integer, Integer>();
+                        shardToPrepareOKs.put(shard, 1);
+                        txToShards.put(tx, shardToPrepareOKs);
+                    }
                 }
             }
         }
@@ -112,12 +179,31 @@ public class ShardedClient extends Node{
                 // increase the counter in the network
                 ((PBFTShardedNetwork)this.network).clientIntraShardTransactions++;
             }
-            // System.out.println("Node shard: " + node.getShardNumber() + " Sender shard: " + ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()));
-            this.networkInterface.addToUpLinkQueue(
-                new Packet(
-                    this, node, new DataMessage(tx)
-                )
-            );
+            // create a pre-prepare message here and send it to all of the concerned shards in the transaction
+            // get the shards the transaction is concerned with
+            int senderShard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender());
+            int receiverShard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getReceiver());
+            // create a pre-prepare message
+            CoordinationMessage prePrepare = new CoordinationMessage(tx, "pre-prepare");
+            // send the message to all of the nodes in the sender shard
+            for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
+                this.networkInterface.addToUpLinkQueue(
+                    new Packet(
+                        this, n, prePrepare
+                    )
+                );
+            }
+            // if the sender and receiver are in different shards
+            if (senderShard != receiverShard) {
+                // send the message to all of the nodes in the receiver shard
+                for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(receiverShard)) {
+                    this.networkInterface.addToUpLinkQueue(
+                        new Packet(
+                            this, n, prePrepare
+                        )
+                    );
+                }
+            }
         }
         this.txs.clear();
     }

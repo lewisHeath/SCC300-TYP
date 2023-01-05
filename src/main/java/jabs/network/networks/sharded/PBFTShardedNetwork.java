@@ -206,4 +206,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
             }
         }
     }
+
+    public int getF() {
+        // get the size of one of the shards and return a third of it
+        return (int) Math.ceil((double) this.shards.get(0).size() / 3);
+    }
 }
