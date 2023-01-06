@@ -108,6 +108,7 @@ public class ShardedClient extends Node{
                     else if (type.equals("committed")) {
                         // remove the transaction from the map
                         txToShards.remove(tx);
+                        System.out.println("Client recieved committed message from node: " + packet.getFrom().getNodeID());
                     }
                 }
                 // if the transaction is not in the map
@@ -164,13 +165,6 @@ public class ShardedClient extends Node{
 
     public void sendAllTransactions() {
         for (EthereumTx tx : txs) {
-            // send it to the shard the account is in
-            int shard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender());
-            // get a random node in that shard to send to (TODO: should this be all nodes?)
-            PBFTShardedNode node = ((PBFTShardedNetwork)this.network).getRandomNodeInShard(shard);
-            // send the transaction to the node
-            // System.out.println("Sending tx from client to shard " + shard);
-            // System.out.println("sender shard: " + ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()));
             // if it is cross shard
             if (((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()) != ((PBFTShardedNetwork)this.network).getAccountShard(tx.getReceiver())) {
                 // increase the counter in the network
@@ -185,16 +179,16 @@ public class ShardedClient extends Node{
             int receiverShard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getReceiver());
             // create a pre-prepare message
             CoordinationMessage prePrepare = new CoordinationMessage(tx, "pre-prepare");
-            // send the message to all of the nodes in the sender shard
-            for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
-                this.networkInterface.addToUpLinkQueue(
-                    new Packet(
-                        this, n, prePrepare
-                    )
-                );
-            }
             // if the sender and receiver are in different shards
             if (senderShard != receiverShard) {
+                // send the message to all of the nodes in the sender shard
+                for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
+                    this.networkInterface.addToUpLinkQueue(
+                        new Packet(
+                            this, n, prePrepare
+                        )
+                    );
+                }
                 // send the message to all of the nodes in the receiver shard
                 for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(receiverShard)) {
                     this.networkInterface.addToUpLinkQueue(
@@ -203,6 +197,9 @@ public class ShardedClient extends Node{
                         )
                     );
                 }
+            } else {
+                // just simply send the transaction to all or one of the nodes in the shard the transaction is in
+                // TODO
             }
         }
         this.txs.clear();

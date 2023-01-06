@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import jabs.consensus.algorithm.CrossShardConsensus;
 import jabs.consensus.algorithm.PBFT;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.Vote;
@@ -28,9 +29,12 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     public static final PBFTBlock PBFT_GENESIS_BLOCK = new PBFTBlock(0, 0, 0, null, null);
     
     private int shardNumber;
+    protected CrossShardConsensus crossShardConsensus;
     protected ArrayList<EthereumTx> mempool;
     protected HashMap<EthereumTx, Node> txToSender;
     protected ArrayList<Recipt> recipts;
+    protected HashMap<EthereumAccount, Boolean> lockedAccounts;
+    protected ArrayList<EthereumAccount> shardAccounts;
 
     public PBFTShardedNode(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth,
             int nodesPerShard, int shardNumber) {
@@ -42,11 +46,14 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.mempool = new ArrayList<>();
         this.txToSender = new HashMap<>();
         this.recipts = new ArrayList<>();
+        this.lockedAccounts = new HashMap<>();
+        this.shardAccounts = new ArrayList<>();
+        this.crossShardConsensus = new CrossShardConsensus(this);
         System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
     @Override
-    protected void processNewTx(EthereumTx tx, Node from) {
+    public void processNewTx(EthereumTx tx, Node from) {
         // for now assuming this only happens when another shard sends the transaction to this shard
         // add it to the mempool
         if(from instanceof PBFTShardedNode) {
@@ -83,12 +90,20 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     }
 
     public void processCoordinationMessage(CoordinationMessage message, Node from) {
-        // pass this down to the cross shard consensus algorithm TODO
+        // pass this down to the cross shard consensus algorithm
+        this.crossShardConsensus.processCoordinationMessage(message, from);
     }
 
     @Override
     protected void processNewBlock(PBFTBlock block) {
         // nothing for now
+    }
+
+    public void processConfirmedBlock(PBFTBlock block) {
+        // pass it to the cross shard consensus algorithm to handle the committed messages
+        this.crossShardConsensus.processConfirmedBlock(block);
+        // pass it to the method to remove the transactions from the mempool
+        this.removeTransactionsFromMempool(block);
     }
 
     @Override
@@ -275,6 +290,15 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         for (EthereumTx tx : block.getTransactions()) {
             this.mempool.remove(tx);
         }
+        // here we need to tell the cross shard consensus algorith to unlock the accounts or do it in another function called form PBFT consensus TODO
+    }
+
+    public ArrayList<EthereumAccount> getShardAccounts() {
+        return this.shardAccounts;
+    }
+
+    public void setShardAccounts(ArrayList<EthereumAccount> shardAccounts) {
+        this.shardAccounts = shardAccounts;
     }
 
     /**
@@ -332,5 +356,11 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
                 );
             }
         }
+    }
+
+    public void sendMessageToNode(Message message, Node node) {
+        this.networkInterface.addToUpLinkQueue(
+            new Packet(this, node, message)
+        );
     }
 }

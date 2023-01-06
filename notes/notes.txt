@@ -20,6 +20,7 @@ THOUGHTS
     - once client receives 2/3 prepareOK from each shard, send out commit to shards which tells them to execute the transaction
     - if the client does not receive this, it sends out abort message
     -- i think i need a layer inside of nodes to agree using PBFT wether or not to lock the accounts!
+- to download a nodes state, use request messages and then set the canonical chain to the shards chain
 
 JOBS
 - add loggers for recipts and transactions

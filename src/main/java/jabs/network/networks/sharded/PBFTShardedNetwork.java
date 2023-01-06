@@ -26,6 +26,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     private ArrayList<ShardedClient> clients = new ArrayList<ShardedClient>();
     // mapping of ethereum accounts to shards
     private HashMap<EthereumAccount, Integer> accountToShard = new HashMap<EthereumAccount, Integer>();
+    private HashMap<Integer, ArrayList<EthereumAccount>> shardToAccounts = new HashMap<Integer, ArrayList<EthereumAccount>>();
     public int intraShardTransactions = 0;
     public int crossShardTransactions = 0;
     public int clientIntraShardTransactions = 0;
@@ -54,6 +55,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
         EightySixCountries region = nodeDistribution.sampleRegion();
+        System.out.println("region of client " + nodeID + " is " + region);
         return new ShardedClient(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region), 
                 this.sampleUploadBandwidth(region));
@@ -135,6 +137,16 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
             EthereumAccount account = new EthereumAccount(shardNumber, i);
             // add the account to the network
             this.addAccount(account, shardNumber);
+            if(this.shardToAccounts.get(shardNumber) == null) {
+                this.shardToAccounts.put(shardNumber, new ArrayList<EthereumAccount>());
+            }
+            this.shardToAccounts.get(shardNumber).add(account);
+        }
+        // tell each node in each shard which accounts are in their shard
+        for (int i = 0; i < numberOfShards; i++){
+            for (int j = 0; j < shards.get(i).size(); j++){
+                shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
+            }
         }
     }
 
