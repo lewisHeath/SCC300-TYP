@@ -137,117 +137,21 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     }
 
     public PBFTBlock createBlock() {
-        // list of all the recipts ( for now send the other half of transactions to the other shards )
-        ArrayList<Recipt> recipts = new ArrayList<>();
-        // System.out.println("Sharded PBFT node creating block");
-        // gather maximum 1000000 gas worth of transactions from mempool
+        // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " creating block");
         ArrayList<EthereumTx> txs = new ArrayList<>();
         int gas = 0;
-        // System.out.println("Mempool size when creating block = " + this.mempool.size() + " shard: " + shardNumber);
-        // System.out.println("Node: " + this.nodeID + " creating block in shard: " + shardNumber);
-        // for (int i = 0; i < this.recipts.size(); i++) {
-        //     Recipt recipt = this.recipts.get(i);
-        //     // get the transaction from the recipt
-        //     EthereumTx tx = recipt.getTx();
-        //     // make a new transaction from null to the receiver
-        //     EthereumTx newTx = new EthereumTx(tx.getSize(), tx.getGas());
-        //     newTx.setSender(null);
-        //     newTx.setReceiver(tx.getReceiver());
-        //     // add this tx to the list of txs
-        //     txs.add(newTx);
-        //     gas += newTx.getGas();
-        //     // add THIS recipt to the list of recipts to be sent to the client to confirm the commit
-        //     // TODO
-        // }
-        if(this.mempool.size() == 0) {
-            System.out.println("Mempool in shard " + this.shardNumber + " is empty");
+        // fill list of txs with txs from the mempool
+        while (gas < 10000000 && this.mempool.size() > 0) {
+            // add top tx from mempool to transaction list
+            EthereumTx tx = this.mempool.get(0);
+            txs.add(tx);
+            gas += tx.getGas();
         }
-        for (int i = 0; i < this.mempool.size(); i++) {
-            EthereumTx tx = this.mempool.get(i);
-            // System.out.println("Gas: " + tx.getGas());
-            if (gas + tx.getGas() <= 10000000) { 
-                // check if it is a cross shard transaction
-                // txs.add(tx);
-                EthereumAccount sender = tx.getSender();
-                EthereumAccount receiver = tx.getReceiver();
-                if(sender != null) {
-                    if(sender.getLocked()){
-                        // System.out.println("sender account " + sender.getAccountNumber() + " is locked");
-                    }
-                }
-                if(sender == null && receiver.getShardNumber() == this.shardNumber) {
-                    // this is the credit for the cross shard transaction
-                    // System.out.println("Node: " + this.nodeID + " adding cross shard transaction to block in shard: " + shardNumber);
-                    /*
-                     * if the account is locked then leave this transaction in the mempool
-                     * if not then add it to the block
-                     */
-                    // txs.add(tx);
-                    /*
-                     * use cross shard transaction object which the nodes can read from the latest blocks and then tell the clients that 
-                     * the transaction has been committed and then the client will send the unlock message to both shards
-                     */
-                }
-                else if(sender.getShardNumber() == this.shardNumber && receiver.getShardNumber() != this.shardNumber) {
-                    // System.out.println("CROSS-SHARD transaction from account: " + sender.getAccountNumber() + " -> " + receiver.getAccountNumber() + " in shard: " + sender.getShardNumber() + " -> " + receiver.getShardNumber());
-                    // PERFORM CROSS SHARD TRANSACTION
-                    /*
-                    * assuming shards pick transactions where the sender account is in their shard, we first need to debt the sender account and create a 'recipt'
-                    * then we add this transaction of debting the senders account and waiting for the other shard to credit the receiver to the block
-                    * then the cross shard coordination happens ( however this happens? ) and the receiver account in the other shard is credited
-                    */
-
-                    // create a receipt for the transaction and debt the account
-                    // clone the tx and set the receiver to null
-                    EthereumTx proof = new EthereumTx(tx.getSize(), tx.getGas());
-                    proof.setSender(sender);
-                    proof.setReceiver(null);
-                    Recipt recipt = new Recipt(tx.getSize() * 2, tx, proof);
-                    // TODO add the amounts
-                    
-                    // add the recipt transaction to the block
-                    // txs.add(proof);
-                    // note down this transaction in the list of recipts to know which shards to notify of a cross shard transaction
-                    recipts.add(recipt);
-                    // System.out.println("Created recipt for cross shard transaction: " + recipt.getTx().getSender().getAccountNumber() + " -> " + recipt.getTx().getReceiver().getAccountNumber() + " in shard: " + recipt.getTx().getSender().getShardNumber() + " -> " + recipt.getTx().getReceiver().getShardNumber());
-                    gas += tx.getGas();
-                    txs.add(tx);
-                    // this.mempool.remove(i);
-
-                    // lock the senders account
-                    sender.lock();
-                    // System.out.println("Locked account " + sender.getAccountNumber() + " in shard: " + sender.getShardNumber());
-
-                    ((PBFTShardedNetwork)network).crossShardTransactions++;
-                } else if (sender.getShardNumber() == this.shardNumber && receiver.getShardNumber() == this.shardNumber) {
-                    // System.out.println("INTRA-SHARD transaction from account: " + sender.getAccountNumber() + " -> " + receiver.getAccountNumber() + " in shard: " + sender.getShardNumber());
-                    // add to the block
-                    txs.add(tx);
-                    // this.mempool.remove(i);
-                    ((PBFTShardedNetwork)network).intraShardTransactions++;
-                    gas += tx.getGas();
-                } else if (sender.getShardNumber() != this.shardNumber && receiver.getShardNumber() == this.shardNumber) {
-                    // System.out.println("THIS SHOULD NOT HAPPPEN");
-                    // ((PBFTShardedNetwork) network).failures++;
-                } else {
-                    System.out.println("THIS SHOULD NOT HAPPPEN 2");
-                    ((PBFTShardedNetwork) network).failures++;
-                }
-            }
-        }
-        // make block with these transactions
+        // create a new block
         PBFTBlock block = new PBFTBlock(gas, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
+        // add the transactions to the block
         block.setTransactions(txs);
-        block.setRecipts(recipts);
-        // return block
-        // System.out.println("Sharded PBFT node created block with " + txs.size() + " transactions from shard " + this.shardNumber + ", node ID " + this.nodeID);
-        // print block height
-        // System.out.println("Block height: " + block.getHeight() + " in shard: " + this.shardNumber);
-        // System.out.println("Mempool size: " + this.mempool.size());
         removeTransactionsFromMempool(block);
-        // handle the cross shard transactions
-        // this.handleCrossShardTransactions(recipts);
-        // System.out.println("Block transactions: " + block.getTransactions().size());
         return block;
     }
 

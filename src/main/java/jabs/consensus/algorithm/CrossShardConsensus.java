@@ -23,7 +23,7 @@ public class CrossShardConsensus {
     }
 
     public void processCoordinationMessage(CoordinationMessage message, Node from) {
-
+        // System.out.println("Processing coordination message");
         // get the transaction from the message
         EthereumTx tx = (EthereumTx) message.getData();
         // get all involved accounts in the transaction and store them in an ArrayList
@@ -80,10 +80,10 @@ public class CrossShardConsensus {
     }
 
     private void processCommitMessage(EthereumTx tx, Node from) {
-        // this will only be called if the client sends commit message, which means we now need to add the transaction to the mempool
-        // and the accounts will be locked at this point
         // add the transaction to the mempool
-        node.processNewTx(tx, from);
+        if(preparedTransactionsFrom.get(tx) == from) {
+            node.processNewTx(tx, from);
+        }
     }
 
     private void processRollbackMessage(ArrayList<EthereumAccount> accountsInThisShard, EthereumTx tx) {
@@ -101,6 +101,10 @@ public class CrossShardConsensus {
         // get the transactions from the block
         ArrayList<EthereumTx> transactions = block.getTransactions();
         // check if the transactions are in the prepared transactions list
+        // if(transactions.size() != 0) {
+        //     // i am here
+        //     System.out.println("I am here");
+        // }
         for (EthereumTx tx : transactions) {
             if (preparedTransactions.contains(tx)) {
                 // if the transaction is in the prepared transactions list, unlock the accounts

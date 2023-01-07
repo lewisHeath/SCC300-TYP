@@ -23,11 +23,13 @@ public class ShardedClient extends Node{
     private ArrayList<EthereumTx> txs;
     // transaction -> <shard, no of prepareOKs>
     private HashMap<EthereumTx, HashMap<Integer, Integer>> txToShards;
+    private HashMap<EthereumTx, HashMap<Integer, Integer>> txToCommitOKs;
 
     public ShardedClient(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
         this.txs = new ArrayList<EthereumTx>();
         this.txToShards = new HashMap<EthereumTx, HashMap<Integer, Integer>>();
+        this.txToCommitOKs = new HashMap<EthereumTx, HashMap<Integer, Integer>>();
         this.fillTxPool(500);
     }
 
@@ -37,36 +39,12 @@ public class ShardedClient extends Node{
         // this is where the recipt from the debting of the sender account will arrive
         // send this recipt to the receivers shard
         Message message = packet.getMessage();
-        if (message instanceof DataMessage) {
-            Data data = ((DataMessage) message).getData();
-            // if the data is an instance of a recipt
-            if (data instanceof Recipt) {
-                System.out.println("Client recieved recipt from node: " + packet.getFrom().getNodeID());
-                Recipt recipt = (Recipt) data;
-                // send the recipt to the shard which has the receiver account
-                int shard = ((PBFTShardedNetwork)this.network).getAccountShard(recipt.getTx().getReceiver());
-                // get a random node in that shard to send to (TODO: should this be all nodes?)
-                Node node = ((PBFTShardedNetwork)this.network).getRandomNodeInShard(shard);
-                // EthereumTx tx = recipt.getTx();
-                // EthereumTx newTx = new EthereumTx(tx.getSize(), tx.getGas());
-                // newTx.setReceiver(tx.getReceiver());
-                // newTx.setSender(null);
-
-                // broadcast recipt to all nodes in shard
-                for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(shard)) {
-                    this.networkInterface.addToUpLinkQueue(
-                        new Packet(
-                            this, n, new DataMessage(recipt)
-                        )
-                    );
-                }
-            }
-        }
-        else if (message instanceof CoordinationMessage) {
+        if (message instanceof CoordinationMessage) {
             // this is the prepareOK, prepareNOTOK and the committed message
             // the data will be the transaction
             Data data = ((CoordinationMessage) message).getData();
             String type = ((CoordinationMessage) message).getType();
+            // System.out.println("Client recieved " + type + " from node: " + packet.getFrom().getNodeID());
             if (data instanceof EthereumTx) {
                 EthereumTx tx = (EthereumTx) data;
                 // if the transaction is in the txToShards map
@@ -91,8 +69,6 @@ public class ShardedClient extends Node{
                     }
                     // if the message is a prepareNOTOK
                     else if (type.equals("prepareNOTOK")) {
-                        // remove the transaction from the map
-                        txToShards.remove(tx);
                         // send a rollback message to all nodes in all concerned shards in the transaction
                         for (int s : txToShards.get(tx).keySet()) {
                             for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(s)) {
@@ -103,12 +79,26 @@ public class ShardedClient extends Node{
                                 );
                             }
                         }
+                        // remove the transaction from the map
+                        txToShards.remove(tx);
                     }
                     // if the message is a committed
                     else if (type.equals("committed")) {
-                        // remove the transaction from the map
-                        txToShards.remove(tx);
-                        System.out.println("Client recieved committed message from node: " + packet.getFrom().getNodeID());
+                        // if there has been no committed messages for this transaction, make a new map
+                        if (!txToCommitOKs.containsKey(tx)) {
+                            HashMap<Integer, Integer> shardToCommitOKs = new HashMap<Integer, Integer>();
+                            txToCommitOKs.put(tx, shardToCommitOKs);
+                        }
+                        txToCommitOKs.get(tx).put(shard, txToShards.get(tx).get(shard) + 1);
+                        // if the number of commitOKs is greater than 2f for all of the shards
+                        if (txToCommitOKs.get(tx).values().stream().allMatch(x -> x > 2 * ((PBFTShardedNetwork)this.network).getF())) {
+                            // the tx is now committed
+                            // System.out.println("Transaction is committed!");
+                            ((PBFTShardedNetwork)this.network).committedTransactions++;
+                            // remove the transaction from the map
+                            txToShards.remove(tx);
+                        }
+                        // System.out.println("Client recieved committed message from node: " + packet.getFrom().getNodeID());
                     }
                 }
                 // if the transaction is not in the map
@@ -122,6 +112,30 @@ public class ShardedClient extends Node{
                         shardToPrepareOKs.put(shard, 1);
                         txToShards.put(tx, shardToPrepareOKs);
                     }
+                }
+            }
+        } else if (message instanceof DataMessage) {
+            Data data = ((DataMessage) message).getData();
+            // if the data is an instance of a recipt
+            if (data instanceof Recipt) {
+                System.out.println("Client recieved recipt from node: " + packet.getFrom().getNodeID());
+                Recipt recipt = (Recipt) data;
+                // send the recipt to the shard which has the receiver account
+                int shard = ((PBFTShardedNetwork)this.network).getAccountShard(recipt.getTx().getReceiver());
+                // get a random node in that shard to send to (TODO: should this be all nodes?)
+                Node node = ((PBFTShardedNetwork)this.network).getRandomNodeInShard(shard);
+                // EthereumTx tx = recipt.getTx();
+                // EthereumTx newTx = new EthereumTx(tx.getSize(), tx.getGas());
+                // newTx.setReceiver(tx.getReceiver());
+                // newTx.setSender(null);
+    
+                // broadcast recipt to all nodes in shard
+                for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(shard)) {
+                    this.networkInterface.addToUpLinkQueue(
+                        new Packet(
+                            this, n, new DataMessage(recipt)
+                        )
+                    );
                 }
             }
         }
@@ -160,19 +174,11 @@ public class ShardedClient extends Node{
             tx.setReceiver(receiver);
             txs.add(tx);
         }
-        // System.out.println("Mempool size: " + this.mempool.size());
+        System.out.println("Mempool size: " + this.txs.size());
     }
 
     public void sendAllTransactions() {
         for (EthereumTx tx : txs) {
-            // if it is cross shard
-            if (((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()) != ((PBFTShardedNetwork)this.network).getAccountShard(tx.getReceiver())) {
-                // increase the counter in the network
-                ((PBFTShardedNetwork)this.network).clientCrossShardTransactions++;
-            } else {
-                // increase the counter in the network
-                ((PBFTShardedNetwork)this.network).clientIntraShardTransactions++;
-            }
             // create a pre-prepare message here and send it to all of the concerned shards in the transaction
             // get the shards the transaction is concerned with
             int senderShard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender());
@@ -181,6 +187,8 @@ public class ShardedClient extends Node{
             CoordinationMessage prePrepare = new CoordinationMessage(tx, "pre-prepare");
             // if the sender and receiver are in different shards
             if (senderShard != receiverShard) {
+                // System.out.println("Client sending cross-shard transaction");
+                ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
                 // send the message to all of the nodes in the sender shard
                 for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
                     this.networkInterface.addToUpLinkQueue(
@@ -199,7 +207,9 @@ public class ShardedClient extends Node{
                 }
             } else {
                 // just simply send the transaction to all or one of the nodes in the shard the transaction is in
+                ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
                 // TODO
+                // System.out.println("Intra-shard transactions not implemented yet");
             }
         }
         this.txs.clear();

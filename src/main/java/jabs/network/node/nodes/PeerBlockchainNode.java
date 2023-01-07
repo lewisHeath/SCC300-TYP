@@ -34,7 +34,10 @@ public abstract class PeerBlockchainNode<B extends SingleParentBlock<B>, T exten
     @Override
     public void processIncomingPacket(Packet packet) {
         Message message = packet.getMessage();
-        if (message instanceof DataMessage) {
+        if (message instanceof CoordinationMessage) {
+            // System.out.println("CoordinationMessage");
+            ((PBFTShardedNode) this).processCoordinationMessage((CoordinationMessage) message, packet.getFrom());
+        } else if (message instanceof DataMessage) {
             Data data = ((DataMessage) message).getData();
             if (data instanceof Block) {
                 B block = (B) data;
@@ -117,8 +120,6 @@ public abstract class PeerBlockchainNode<B extends SingleParentBlock<B>, T exten
                 alreadySeenVotes.add(vote);
                 this.processNewVote(vote);
             }
-        } else if (message instanceof CoordinationMessage) {
-            ((PBFTShardedNode) this).processCoordinationMessage((CoordinationMessage) message, packet.getFrom());
         }
     }
 

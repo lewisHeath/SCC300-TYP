@@ -114,7 +114,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                         this.currentMainChainHead = block;
                         updateChain();
                         // TODO: handle the cross shard transactions in the newest block in the chain
-                        handleCrossShardTransactions();
+                        // handleCrossShardTransactions();
                         // System.out.println("checking if i can make a new block");
                         // get the shard that this node is in
                         int ID = this.peerBlockchainNode.nodeID;

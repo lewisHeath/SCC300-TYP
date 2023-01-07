@@ -142,6 +142,7 @@ public abstract class AbstractScenario {
         System.out.println("Client cross shard transactions: " + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions);
 
         System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
+        System.out.println("Committed transactions: " + ((PBFTShardedNetwork)this.network).committedTransactions);
 
         System.err.printf("Finished %s.\n", this.name);
     }

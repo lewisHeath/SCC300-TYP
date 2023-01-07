@@ -32,16 +32,18 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int clientIntraShardTransactions = 0;
     public int clientCrossShardTransactions = 0;
     public int failures = 0;
+    public int committedTransactions = 0;
     public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
-
+    
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
         this.accountToShard = new HashMap<EthereumAccount, Integer>();
         this.clients = new ArrayList<ShardedClient>();
-        this.generateAccounts(1000);
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
+        // add accounts
+        this.generateAccounts(1000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
@@ -102,8 +104,12 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
             client.getP2pConnections().connectToNetwork(this);
         }
 
-        // generate the mempools for each of the shards
-        // this.generateMempools(100000);
+        // tell each node in each shard which accounts are in their shard
+        for (int i = 0; i < numberOfShards; i++){
+            for (int j = 0; j < shards.get(i).size(); j++){
+                shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
+            }
+        }
     }
 
     /**
@@ -141,12 +147,6 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
                 this.shardToAccounts.put(shardNumber, new ArrayList<EthereumAccount>());
             }
             this.shardToAccounts.get(shardNumber).add(account);
-        }
-        // tell each node in each shard which accounts are in their shard
-        for (int i = 0; i < numberOfShards; i++){
-            for (int j = 0; j < shards.get(i).size(); j++){
-                shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
-            }
         }
     }
 

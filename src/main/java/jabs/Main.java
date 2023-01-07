@@ -20,7 +20,7 @@ public class Main {
         /* SHARDED TESTING */
         // generate a random number between 1 and 1000000
         int randomNum = 1 + (int)(Math.random() * 1000000);
-        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 5, 10, 3600);
+        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 5, 10, 3600 * 5);
         scenario.AddNewLogger(new VoteLogger(Paths.get("output/sharded-pbft-block-delivery-log.csv")));
         scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/sharded-pbft-coordination-messages-log.csv")));
         scenario.run();
