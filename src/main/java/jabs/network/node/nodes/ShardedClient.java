@@ -2,6 +2,7 @@ package jabs.network.node.nodes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import jabs.ledgerdata.Data;
 import jabs.ledgerdata.TransactionFactory;
@@ -59,14 +60,15 @@ public class ShardedClient extends Node{
                         // increment vote for this tx from this shard
                         txToShards.get(tx).put(shard, txToShards.get(tx).get(shard) + 1);
                         if (txToShards.get(tx).values().stream().allMatch(x -> x >= 2 * ((PBFTShardedNetwork)this.network).getF()) && !txsWithCommitMessagesSent.contains(tx)) {
-                            // send a commit message to all nodes in the shard
-                            // System.out.println("Commit message sent to shard: " + shard);
-                            for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(shard)) {
-                                this.networkInterface.addToUpLinkQueue(
-                                    new Packet(
-                                        this, n, new CoordinationMessage(tx, "commit")
-                                    )
-                                );
+                            // send a commit message to all nodes in BOTH shards
+                            for (int shardToSendTo : txToShards.get(tx).keySet()) {
+                                for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(shardToSendTo)) {
+                                    this.networkInterface.addToUpLinkQueue(
+                                        new Packet(
+                                            this, n, new CoordinationMessage(tx, "commit")
+                                        )
+                                    );
+                                }
                             }
                             // add to a list of transactions that have had the commit message sent
                             txsWithCommitMessagesSent.add(tx);
@@ -97,6 +99,19 @@ public class ShardedClient extends Node{
                     else if (type.equals("committed")) {
                         txToCommitOKs.get(tx).put(shard, txToCommitOKs.get(tx).get(shard) + 1);
                         // if the number of commitOKs is greater than 2f for all of the shards
+                        // HashMap<Integer, Integer> commitOKs = txToCommitOKs.get(tx);
+                        // // if both values are above 1
+                        // ArrayList<Integer> values = commitOKs.values().stream().collect(Collectors.toCollection(ArrayList::new));
+                        // Boolean above1 = true;
+                        // for(Integer value : values) {
+                        //     if(value < 1){
+                        //         above1 = false;
+                        //         break;
+                        //     }
+                        // }
+                        // if(above1){
+                        //     int j = 0;
+                        // }
                         if (txToCommitOKs.get(tx).values().stream().allMatch(x -> x >= 2 * ((PBFTShardedNetwork)this.network).getF())) {
                             // the tx is now committed
                             // System.out.println("Transaction is committed!");
