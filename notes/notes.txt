@@ -52,3 +52,7 @@ Questions
         - client tells shards to commit once they have all told the client they have locked
         - shards unlock account and debit/credit accounts in newest blocks
         - shards tell client it was successful
+
+problems
+- make clients try cross shard transactions again and again until they are committed
+- allow intra shard transactions
