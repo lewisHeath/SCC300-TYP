@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
 import jabs.consensus.algorithm.CrossShardConsensus;
 import jabs.consensus.algorithm.PBFT;
 import jabs.ledgerdata.TransactionFactory;
@@ -48,7 +49,8 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.recipts = new ArrayList<>();
         this.lockedAccounts = new HashMap<>();
         this.shardAccounts = new ArrayList<>();
-        this.crossShardConsensus = new CrossShardConsensus(this);
+        // this needs to be mofified to support shard led
+        this.crossShardConsensus = new ClientLedCrossShardConsensus(this);
         System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
