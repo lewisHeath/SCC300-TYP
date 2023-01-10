@@ -117,6 +117,7 @@ public class CrossShardConsensus {
                 // unlock the accounts
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
+                    // System.out.println("Unlocking account " + account);
                 }
                 // send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");

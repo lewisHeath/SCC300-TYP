@@ -37,11 +37,12 @@ public class ShardedClient extends Node{
         this.abortedTransactions = new ArrayList<EthereumTx>();
         this.txsWithCommitMessagesSent = new ArrayList<EthereumTx>();
         this.txToTime = new HashMap<EthereumTx, Double>();
-        this.fillTxPool(5);
+        this.fillTxPool(100);
     }
 
     @Override
     public void processIncomingPacket(Packet packet) {
+        this.reSendTxs();
         Message message = packet.getMessage();
         if (message instanceof CoordinationMessage) {
             // this is the prepareOK, prepareNOTOK and the committed message
@@ -92,26 +93,14 @@ public class ShardedClient extends Node{
                         abortedTransactions.add(tx);
                         // add the tx to a map of transactions to be sent, with the time being 1 minute from now
                         if(txToTime.get(tx) == null){
-                            txToTime.put(tx, this.simulator.getSimulationTime() + 60);
+                            // System.out.println("Transaction is aborted, adding to queue to be sent again");
+                            txToTime.put(tx, this.simulator.getSimulationTime() + 10);
                         }
                     }
                     // if the message is a committed
                     else if (type.equals("committed")) {
                         txToCommitOKs.get(tx).put(shard, txToCommitOKs.get(tx).get(shard) + 1);
                         // if the number of commitOKs is greater than 2f for all of the shards
-                        // HashMap<Integer, Integer> commitOKs = txToCommitOKs.get(tx);
-                        // // if both values are above 1
-                        // ArrayList<Integer> values = commitOKs.values().stream().collect(Collectors.toCollection(ArrayList::new));
-                        // Boolean above1 = true;
-                        // for(Integer value : values) {
-                        //     if(value < 1){
-                        //         above1 = false;
-                        //         break;
-                        //     }
-                        // }
-                        // if(above1){
-                        //     int j = 0;
-                        // }
                         if (txToCommitOKs.get(tx).values().stream().allMatch(x -> x >= 2 * ((PBFTShardedNetwork)this.network).getF())) {
                             // the tx is now committed
                             // System.out.println("Transaction is committed!");
@@ -119,11 +108,14 @@ public class ShardedClient extends Node{
                             // remove the transaction from the map
                             txToCommitOKs.remove(tx);
                             txToShards.remove(tx);
+                            // remove the transaction from the txs list
+                            this.txs.remove(tx);
                         }
                     }
                 }
             }
         }
+        // this.reSendTxs();
     }
 
     @Override
@@ -158,8 +150,13 @@ public class ShardedClient extends Node{
             tx.setSender(sender);
             tx.setReceiver(receiver);
             txs.add(tx);
+            int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
+            int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
+            if(senderShard != receiverShard) {
+                ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
+            }
         }
-        System.out.println("Mempool size: " + this.txs.size());
+        // System.out.println("Mempool size: " + this.txs.size());
     }
 
     public void sendAllTransactions() {
@@ -194,7 +191,7 @@ public class ShardedClient extends Node{
             txToCommitOKs.get(tx).put(receiverShard, 0);
             this.txToTime.remove(tx);
             // System.out.println("Client sending cross-shard transaction");
-            ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
+            // ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
             // send the message to all of the nodes in the sender shard
             for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
                 this.networkInterface.addToUpLinkQueue(
@@ -215,7 +212,7 @@ public class ShardedClient extends Node{
             // just simply send the transaction to all or one of the nodes in the shard the transaction is in
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             DataMessage newTx = new DataMessage(tx);
-            // //send a data message with the tx in to all the nodes in the shard
+            //send a data message with the tx in to all the nodes in the shard
             // for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
             //     this.networkInterface.addToUpLinkQueue(
             //         new Packet(
@@ -232,11 +229,17 @@ public class ShardedClient extends Node{
         // for each tx in the txToTime map
         for (EthereumTx tx : txsToBeSent.keySet()) {
             // if the current simulation time is greater than the time from the map
+            // System.out.println("Current time: " + this.simulator.getSimulationTime() + " txToTime: " + txToTime.get(tx));
             if (this.simulator.getSimulationTime() > txToTime.get(tx)) {
+                // create a new version of the transaction
+                EthereumTx newTx = new EthereumTx(tx.getSize(), tx.getGas());
+                newTx.setSender(tx.getSender());
+                newTx.setReceiver(tx.getReceiver());
                 // send the transaction again
-                this.sendTransaction(tx);
+                this.sendTransaction(newTx);
                 // remove the transaction from the map
                 txToTime.remove(tx);
+                // System.out.println("Resending transaction");
             }
         }
     }
