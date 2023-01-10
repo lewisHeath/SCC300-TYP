@@ -2,6 +2,7 @@ package jabs.log;
 
 import jabs.simulator.event.Event;
 import jabs.simulator.event.PacketDeliveryEvent;
+import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.network.message.CoordinationMessage;
 import jabs.network.message.Message;
 import jabs.network.message.Packet;
@@ -57,19 +58,21 @@ public class CoordinationMessagesLogger extends AbstractCSVLogger {
 
     @Override
     protected String[] csvHeaderOutput() {
-        return new String[] { "Time", "MessageType", "Sender", "Receiver" };
+        return new String[] { "Time", "MessageType", "Sender", "Receiver", "Tx ID" };
     }
 
     @Override
     protected String[] csvEventOutput(Event event) {
         Packet packet = ((PacketDeliveryEvent) event).packet;
         CoordinationMessage message = (CoordinationMessage) packet.getMessage();
+        EthereumTx tx = (EthereumTx)message.getData();
 
         return new String[] {
                 Double.toString(this.scenario.getSimulator().getSimulationTime()),
                 message.getType(),
                 Integer.toString(packet.getFrom().nodeID),
-                Integer.toString(packet.getTo().nodeID)
+                Integer.toString(packet.getTo().nodeID),
+                Integer.toString(tx.hashCode())
         };
     }
 }

@@ -43,7 +43,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.clients = new ArrayList<ShardedClient>();
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         // add accounts
-        this.generateAccounts(1000);
+        this.generateAccounts(100000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
@@ -92,7 +92,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
         // add the clients to the network FIRST TODO!!!!!!!!
         int amountOfBlockchainNodes = this.getAllNodes().size();
-        for(int i = amountOfBlockchainNodes; i < 100 + amountOfBlockchainNodes; i++) {
+        for(int i = amountOfBlockchainNodes; i < 10 + amountOfBlockchainNodes; i++) {
             // create a new client and add it to the clients list
             ShardedClient client = createNewShardedClient(simulator, i);
             this.clients.add(client);

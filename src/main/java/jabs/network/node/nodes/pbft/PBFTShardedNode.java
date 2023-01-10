@@ -64,7 +64,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         // System.out.println("Node: " + this.nodeID + " received tx " + " from Node: " + from.getNodeID() + " in shard: " + shardNumber);
         this.mempool.add(tx);
         // broadcast to the other peers in this shard
-        this.broadcastTransaction(tx, from);
+        this.broadcastTransactionToShard(tx, shardNumber);
         // add this transaction along with the client it was sent from to a list
         this.txToSender.put(tx, from);
         // System.out.println("Mempool size: " + this.mempool.size() + " shard: " + shardNumber);
@@ -104,6 +104,8 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.crossShardConsensus.processConfirmedBlock(block);
         // pass it to the method to remove the transactions from the mempool
         this.removeTransactionsFromMempool(block);
+        // process the intra shard transactions and tell the client they are confirmed
+        // TODO
     }
 
     @Override
@@ -140,15 +142,22 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " creating block");
         ArrayList<EthereumTx> txs = new ArrayList<>();
         int gas = 0;
+        int size = 0;
+        if(this.mempool.size() ==0){
+            // System.out.println("Mempool is empty");
+        }
         // fill list of txs with txs from the mempool
         while (gas < 10000000 && this.mempool.size() > 0) {
             // add top tx from mempool to transaction list
             EthereumTx tx = this.mempool.get(0);
+            this.mempool.remove(0);
             txs.add(tx);
             gas += tx.getGas();
+            size += tx.getSize();
         }
+        if(size == 0) size = 1000000;
         // create a new block
-        PBFTBlock block = new PBFTBlock(gas, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
+        PBFTBlock block = new PBFTBlock(size, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
         // add the transactions to the block
         block.setTransactions(txs);
         removeTransactionsFromMempool(block);
@@ -193,6 +202,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     public void removeTransactionsFromMempool(PBFTBlock block) {
         for (EthereumTx tx : block.getTransactions()) {
             this.mempool.remove(tx);
+            // System.out.println("Mempool size: " + this.mempool.size());
         }
         // here we need to tell the cross shard consensus algorith to unlock the accounts or do it in another function called form PBFT consensus TODO
     }
@@ -226,7 +236,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.broadcastMessage(new DataMessage(recipt), this);
     }
 
-    protected void broadcastTransactionToShard(EthereumTx tx, int shardNumber) {
+    public void broadcastTransactionToShard(EthereumTx tx, int shardNumber) {
         // System.out.println("Sharded PBFT node broadcasting transaction");
         // broadcast transaction to all nodes in the specified shard
         broadcastMessageToShard(new DataMessage(tx), shardNumber);
