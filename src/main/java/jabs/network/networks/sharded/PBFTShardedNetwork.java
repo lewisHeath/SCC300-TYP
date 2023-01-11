@@ -26,21 +26,24 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     private ArrayList<ShardedClient> clients = new ArrayList<ShardedClient>();
     // mapping of ethereum accounts to shards
     private HashMap<EthereumAccount, Integer> accountToShard = new HashMap<EthereumAccount, Integer>();
+    private HashMap<Integer, ArrayList<EthereumAccount>> shardToAccounts = new HashMap<Integer, ArrayList<EthereumAccount>>();
     public int intraShardTransactions = 0;
     public int crossShardTransactions = 0;
     public int clientIntraShardTransactions = 0;
     public int clientCrossShardTransactions = 0;
     public int failures = 0;
+    public int committedTransactions = 0;
     public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
-
+    
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
         this.accountToShard = new HashMap<EthereumAccount, Integer>();
         this.clients = new ArrayList<ShardedClient>();
-        this.generateAccounts(1000);
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
+        // add accounts
+        this.generateAccounts(100000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
@@ -54,6 +57,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
         EightySixCountries region = nodeDistribution.sampleRegion();
+        System.out.println("region of client " + nodeID + " is " + region);
         return new ShardedClient(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region), 
                 this.sampleUploadBandwidth(region));
@@ -88,7 +92,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
         // add the clients to the network FIRST TODO!!!!!!!!
         int amountOfBlockchainNodes = this.getAllNodes().size();
-        for(int i = amountOfBlockchainNodes; i < 100 + amountOfBlockchainNodes; i++) {
+        for(int i = amountOfBlockchainNodes; i < 10 + amountOfBlockchainNodes; i++) {
             // create a new client and add it to the clients list
             ShardedClient client = createNewShardedClient(simulator, i);
             this.clients.add(client);
@@ -100,8 +104,12 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
             client.getP2pConnections().connectToNetwork(this);
         }
 
-        // generate the mempools for each of the shards
-        this.generateMempools(100000);
+        // tell each node in each shard which accounts are in their shard
+        for (int i = 0; i < numberOfShards; i++){
+            for (int j = 0; j < shards.get(i).size(); j++){
+                shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
+            }
+        }
     }
 
     /**
@@ -135,6 +143,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
             EthereumAccount account = new EthereumAccount(shardNumber, i);
             // add the account to the network
             this.addAccount(account, shardNumber);
+            if(this.shardToAccounts.get(shardNumber) == null) {
+                this.shardToAccounts.put(shardNumber, new ArrayList<EthereumAccount>());
+            }
+            this.shardToAccounts.get(shardNumber).add(account);
         }
     }
 
@@ -205,5 +217,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
                 node.setMempool(mempool);
             }
         }
+    }
+
+    public int getF() {
+        // get the size of one of the shards and return a third of it
+        return (int) Math.ceil((double) this.shards.get(0).size() / 3);
     }
 }

@@ -114,7 +114,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                         this.currentMainChainHead = block;
                         updateChain();
                         // TODO: handle the cross shard transactions in the newest block in the chain
-                        handleCrossShardTransactions();
+                        // handleCrossShardTransactions();
                         // System.out.println("checking if i can make a new block");
                         // get the shard that this node is in
                         int ID = this.peerBlockchainNode.nodeID;
@@ -122,8 +122,8 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                             PBFTShardedNode pbftShardedNode = (PBFTShardedNode) this.peerBlockchainNode;
                             int shardNumber = pbftShardedNode.getShardNumber();
                             ID = ((PBFTShardedNetwork) pbftShardedNode.getNetwork()).getIndexOfNode(pbftShardedNode, shardNumber);
-                            // remove the transactions from that block from the mempool
-                            pbftShardedNode.removeTransactionsFromMempool((PBFTBlock) block);
+                            // pass the block to the cross shard consensus protocol to handle committed messages and remove the transactions from the mempool
+                            pbftShardedNode.processConfirmedBlock((PBFTBlock) block);
                         }
                         if (ID == this.getCurrentPrimaryNumber()){ // IF IT IS THIS NODES TIME TO MAKE A BLOCK, MAKE ONE
                             // System.out.println("Node ID: " + this.peerBlockchainNode.nodeID + " making a block");

@@ -124,9 +124,9 @@ public abstract class AbstractScenario {
                 double simulationTime = this.simulator.getSimulationTime();
                 System.err.printf(
                         "Simulation in progress... " +
-                                "Elapsed Real Time: %d:%02d:%02d, Elapsed Simulation Time: %d:%02d:%02d\n",
+                                "Elapsed Real Time: %d:%02d:%02d, Elapsed Simulation Time: %d:%02d:%02d, Simulation time raw: %d\n",
                         (long)(realTime / 3600), (long)((realTime % 3600) / 60), (long)(realTime % 60),
-                        (long)(simulationTime / 3600), (long)((simulationTime % 3600) / 60), (long)(simulationTime % 60)
+                        (long)(simulationTime / 3600), (long)((simulationTime % 3600) / 60), (long)(simulationTime % 60), (long)simulationTime
                 );
                 lastProgressMessageTime = System.nanoTime();
             }
@@ -142,6 +142,7 @@ public abstract class AbstractScenario {
         System.out.println("Client cross shard transactions: " + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions);
 
         System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
+        System.out.println("Committed transactions: " + ((PBFTShardedNetwork)this.network).committedTransactions);
 
         System.err.printf("Finished %s.\n", this.name);
     }

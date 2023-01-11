@@ -14,3 +14,45 @@ THOUGHTS
     - the network will either randomly make these or read them in, then distribute them to the sender shard
     - the sender shard will then lock the account and send proof of this to a random client, this chosen client for now will act as the coordinator
     - they will tell the receiving shard to lock the receiving account.
+    -- this does not work well with asynchronous network because of the way i add recipts to the mempool!!
+- 2PC client led
+    - client sends out prepare message to shards, if these shards can lock the account, they send prepareOK and lock the account, if not, they send prepareNOTOK
+    - once client receives 2/3 prepareOK from each shard, send out commit to shards which tells them to execute the transaction
+    - if the client does not receive this, it sends out abort message
+    -- i think i need a layer inside of nodes to agree using PBFT wether or not to lock the accounts!
+- to download a nodes state, use request messages and then set the canonical chain to the shards chain
+
+JOBS
+- add loggers for recipts and transactions
+- create prepare, prepareOK, prepareNOTOK and commit messages
+- add loggers for these messages
+- make the clients submit transactions, and the nodes respond with prepareOK or prepareNOTOK, then the cients commit or abort.
+- talk with supervisior on Friday about these notes and ask questions
+
+- make a new cross shard consensus layer for the sharded nodes
+    - pass the coordination messages to this layer
+
+Questions
+- do i need a beacon chain?
+- should nodes have their own copy of account -> shard mapping or always rely on asking the beacon chain?
+
+- client led question
+    - how should the protocol be structured
+    1. 
+        - client tells sender shard to deduct money
+        - shard does that and sends proof to client and locks account
+        - client sends proof to receiver shard
+        - receiver shard credts money
+        - receiver shard informs client that it was successful
+        - client tells sender shard to unlock account
+    2. 
+        - client tells both sender and receiver shards to lock account
+        - nodes in shard add the locking operation to a block to confirm it
+        - shards tell client the accounts are locked
+        - client tells shards to commit once they have all told the client they have locked
+        - shards unlock account and debit/credit accounts in newest blocks
+        - shards tell client it was successful
+
+problems
+- make clients try cross shard transactions again and again until they are committed
+- allow intra shard transactions

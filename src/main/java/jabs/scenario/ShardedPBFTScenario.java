@@ -34,7 +34,7 @@ public class ShardedPBFTScenario extends AbstractScenario {
         // tell all of the clients to send the transactions to the correct shards
         ArrayList<ShardedClient> clients = ((PBFTShardedNetwork) network).getClients();
         for (ShardedClient client : clients) {
-            // client.sendAllTransactions();
+            client.sendAllTransactions();
         }
         // get the first node in each shard and broadcast genesis block
         for (int i = 0; i < numberOfShards; i++) {
