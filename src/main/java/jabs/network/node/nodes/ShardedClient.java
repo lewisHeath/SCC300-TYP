@@ -70,6 +70,8 @@ public class ShardedClient extends Node{
             int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
             if(senderShard != receiverShard) {
                 ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
+            } else {
+                ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             }
         }
         // System.out.println("Mempool size: " + this.txs.size());

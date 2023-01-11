@@ -154,7 +154,6 @@ public class ClientLedEdgeNodeProtocol implements EdgeNodeProtocol {
         } else {
             // just simply send the transaction to all or one of the nodes in the shard the
             // transaction is in
-            ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             DataMessage newTx = new DataMessage(tx);
             // send a data message with the tx in to all the nodes in the shard
             // for (Node n : ((PBFTShardedNetwork)this.network).getAllNodesFromShard(senderShard)) {
