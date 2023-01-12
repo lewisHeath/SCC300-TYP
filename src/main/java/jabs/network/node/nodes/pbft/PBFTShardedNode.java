@@ -9,6 +9,7 @@ import java.util.HashSet;
 import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
 import jabs.consensus.algorithm.CrossShardConsensus;
 import jabs.consensus.algorithm.PBFT;
+import jabs.consensus.algorithm.ShardLedCrossShardConsensus;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.Vote;
 import jabs.ledgerdata.Sharding.Recipt;
@@ -50,7 +51,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.lockedAccounts = new HashMap<>();
         this.shardAccounts = new ArrayList<>();
         // this needs to be mofified to support shard led
-        this.crossShardConsensus = new ClientLedCrossShardConsensus(this);
+        this.crossShardConsensus = new ShardLedCrossShardConsensus(this);
         System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
@@ -262,7 +263,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         broadcastMessage(new DataMessage(tx), excludeNeighbor);
     }
 
-    protected void broadcastMessage(Message message, Node excludeNeighbor) {
+    public void broadcastMessage(Message message, Node excludeNeighbor) {
         for (Node neighbor : this.p2pConnections.getNeighbors()) {
             if (neighbor != excludeNeighbor) {
                 this.networkInterface.addToUpLinkQueue(

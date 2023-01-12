@@ -51,7 +51,7 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                     // remove the tx from the data structures (and maybe to a list of committed txs)
                     this.preparedTxs.remove(tx);
                 }
-            } else if(type.equals("abort")) {
+            } else if(type.equals("aborted")) {
                 // increment vote for abort
                 this.txToAborts.get(tx).put(shard, this.txToAborts.get(tx).get(shard) + 1);
                 // if ANY shards votes are above 2f
