@@ -22,6 +22,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     private int numberOfShards;
     private int nodesPerShard;
+    private int numberOfClients;
+    private int timeBetweenTxs;
     private final ArrayList<ArrayList<PBFTShardedNode>> shards = new ArrayList<ArrayList<PBFTShardedNode>>();
     private ArrayList<ShardedClient> clients = new ArrayList<ShardedClient>();
     // mapping of ethereum accounts to shards
@@ -35,10 +37,12 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int committedTransactions = 0;
     public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
     
-    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard) {
+    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
+        this.numberOfClients = numberOfClients;
+        this.timeBetweenTxs = timeBetweenTxs;
         this.accountToShard = new HashMap<EthereumAccount, Integer>();
         this.clients = new ArrayList<ShardedClient>();
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
@@ -48,7 +52,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
         EightySixCountries region = nodeDistribution.sampleRegion();
-        System.out.println("region of node " + nodeID + " is " + region);
+        // System.out.println("region of node " + nodeID + " is " + region);
         return new PBFTShardedNode(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region),
                 this.sampleUploadBandwidth(region),
@@ -57,15 +61,22 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
         EightySixCountries region = nodeDistribution.sampleRegion();
-        System.out.println("region of client " + nodeID + " is " + region);
+        // System.out.println("region of client " + nodeID + " is " + region);
         return new ShardedClient(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region), 
-                this.sampleUploadBandwidth(region));
+                this.sampleUploadBandwidth(region),
+                this.timeBetweenTxs);
     }
 
     @Override
     public void populateNetwork(Simulator simulator, int numNodes, ConsensusAlgorithmConfig consensusAlgorithmConfig) {
         populateNetwork(simulator, consensusAlgorithmConfig);
+    }
+
+    public void startClientTxGenerationProcesses(){
+        for(ShardedClient client : clients){
+            client.startTxGenerationProcess();
+        }
     }
 
     @Override
@@ -86,18 +97,14 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (Node node : this.getAllNodes()) {
             node.getP2pConnections().connectToNetwork(this);
         }
-        // so now each node is in this network but its neighbors are their shard
-        // System.out.println("number of shards: " + shards.size());
-        // System.out.println("number of nodes in shards: " + shards.get(0).size());
-
-        // add the clients to the network FIRST TODO!!!!!!!!
+        // create the clients
         int amountOfBlockchainNodes = this.getAllNodes().size();
-        for(int i = amountOfBlockchainNodes; i < 10 + amountOfBlockchainNodes; i++) {
+        for(int i = amountOfBlockchainNodes; i < numberOfClients + amountOfBlockchainNodes; i++) {
             // create a new client and add it to the clients list
             ShardedClient client = createNewShardedClient(simulator, i);
             this.clients.add(client);
             this.addNode(client);
-            System.out.println("client " + i + " created");
+            // System.out.println("client " + i + " created");
         }
         // connect each client to the network
         for (ShardedClient client : this.clients) {

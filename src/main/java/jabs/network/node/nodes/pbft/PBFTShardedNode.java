@@ -52,7 +52,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.shardAccounts = new ArrayList<>();
         // this needs to be mofified to support shard led
         this.crossShardConsensus = new ShardLedCrossShardConsensus(this);
-        System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
+        // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
     @Override

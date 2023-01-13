@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import jabs.consensus.algorithm.ClientLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.EdgeNodeProtocol;
+import jabs.consensus.algorithm.ShardLedEdgeNodeProtocol;
 import jabs.ledgerdata.Data;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
@@ -16,18 +17,21 @@ import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.p2p.ShardedClientP2P;
 import jabs.simulator.Simulator;
+import jabs.simulator.event.TxGenerationProcessSingleNode;
 
 public class ShardedClient extends Node{
 
     private ArrayList<EthereumTx> txs;
     private EdgeNodeProtocol protocol;
+    protected Simulator.ScheduledEvent txGenerationProcess;
+    private int timeBetweenTxs;
 
-    public ShardedClient(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth) {
+    public ShardedClient(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth, int timeBetweenTxs) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
         this.txs = new ArrayList<EthereumTx>();
         // this needs to be modified for allowing either client led or shard led to be used
-        this.protocol = new ClientLedEdgeNodeProtocol(this, network);
-        this.fillTxPool(100);
+        this.protocol = new ShardLedEdgeNodeProtocol(this, network);
+        this.timeBetweenTxs = timeBetweenTxs;
     }
 
     @Override
@@ -50,38 +54,31 @@ public class ShardedClient extends Node{
 
     @Override
     public void generateNewTransaction() {
-        
-    }
-
-    public void addTx(EthereumTx tx) {
+        EthereumTx tx = TransactionFactory.sampleEthereumTransaction(network.getRandom());
+        // get 2 random accounts from the network
+        EthereumAccount sender = ((PBFTShardedNetwork) network).getRandomAccount();
+        EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccount();
+        tx.setSender(sender);
+        tx.setReceiver(receiver);
         txs.add(tx);
+        int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
+        int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
+        if (senderShard != receiverShard) {
+            ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
+        } else {
+            ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
+        }
+        // send the tx to the network
+        this.sendTransaction(tx);
     }
 
-    protected void fillTxPool(int numTxs) {
-        for (int i = 0; i < numTxs; i++) {
-            EthereumTx tx = TransactionFactory.sampleEthereumTransaction(network.getRandom());
-            // get 2 random accounts from the network
-            EthereumAccount sender = ((PBFTShardedNetwork) network).getRandomAccount();
-            EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccount();
-            tx.setSender(sender);
-            tx.setReceiver(receiver);
-            txs.add(tx);
-            int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
-            int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
-            if(senderShard != receiverShard) {
-                ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
-            } else {
-                ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
-            }
-        }
-        // System.out.println("Mempool size: " + this.txs.size());
+    public void startTxGenerationProcess() {
+        TxGenerationProcessSingleNode txGenerationProcess = new TxGenerationProcessSingleNode(this.simulator, this.network.getRandom(), this, timeBetweenTxs);
+        this.txGenerationProcess = this.simulator.putEvent(txGenerationProcess, txGenerationProcess.timeToNextGeneration());
     }
 
-    public void sendAllTransactions() {
-        for (EthereumTx tx : txs) {
-            this.sendTransaction(tx);
-        }
-        this.txs.clear();
+    public void stopTxGenerationProcess() {
+        this.simulator.removeEvent(this.txGenerationProcess);
     }
 
     private void sendTransaction(EthereumTx tx) {

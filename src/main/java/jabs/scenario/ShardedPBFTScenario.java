@@ -14,28 +14,29 @@ public class ShardedPBFTScenario extends AbstractScenario {
     protected int nodesPerShard;
     protected int simulationStopTime;
     protected int numberOfShards;
+    protected int numberOfClients;
+    protected int timeBetweenTxs;
 
-    public ShardedPBFTScenario(String name, long seed, int numberOfShards, int nodesPerShard,
+    public ShardedPBFTScenario(String name, long seed, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs,
             double simulationStopTime) {
         super(name, seed);
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
         this.simulationStopTime = (int) simulationStopTime;
+        this.numberOfClients = numberOfClients;
+        this.timeBetweenTxs = timeBetweenTxs;
     }
 
     @Override
     public void createNetwork() {
-        network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard);
+        network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs);
         network.populateNetwork(simulator, new PBFTConsensusConfig());
     }
 
     @Override
     protected void insertInitialEvents() {
         // tell all of the clients to send the transactions to the correct shards
-        ArrayList<ShardedClient> clients = ((PBFTShardedNetwork) network).getClients();
-        for (ShardedClient client : clients) {
-            client.sendAllTransactions();
-        }
+        ((PBFTShardedNetwork)this.network).startClientTxGenerationProcesses();
         // get the first node in each shard and broadcast genesis block
         for (int i = 0; i < numberOfShards; i++) {
             // PBFTShardedNode node = ((PBFTShardedNetwork) network).getShard(i).get(0);
