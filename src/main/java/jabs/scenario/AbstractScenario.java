@@ -140,6 +140,8 @@ public abstract class AbstractScenario {
 
         System.out.println("intra shard transactions generated: " + ((PBFTShardedNetwork)this.network).clientIntraShardTransactions);
         System.out.println("cross shard transactions generated: " + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions);
+        int total = ((PBFTShardedNetwork)this.network).clientIntraShardTransactions + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions;
+        System.out.println("total transactions generated: " + total);
 
         // System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
         System.out.println("Committed transactions: " + ((PBFTShardedNetwork)this.network).committedTransactions);

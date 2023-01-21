@@ -67,7 +67,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         // System.out.println("Node: " + this.nodeID + " received tx " + " from Node: " + from.getNodeID() + " in shard: " + shardNumber);
         this.mempool.add(tx);
         // broadcast to the other peers in this shard
-        this.broadcastTransactionToShard(tx, shardNumber);
+        // this.broadcastTransactionToShard(tx, shardNumber);
         // add this transaction along with the client it was sent from to a list
         this.txToSender.put(tx, from);
         // System.out.println("Mempool size: " + this.mempool.size() + " shard: " + shardNumber);
@@ -109,6 +109,36 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.removeTransactionsFromMempool(block);
         // process the intra shard transactions and tell the client they are confirmed
         // TODO
+        this.processIntraShardTxsFromBlock(block);
+    }
+
+    private void processIntraShardTxsFromBlock(PBFTBlock block) {
+        // for each tx in the block, work out if it is intra shard or not
+        for(EthereumTx tx : block.getTransactions()){
+            // this will change for smart contract txs...
+            ArrayList<EthereumAccount> accounts = new ArrayList<>();
+            accounts.add(tx.getSender());
+            accounts.add(tx.getReceiver());
+            // check if they are in the same shard
+            ArrayList<Integer> shards = new ArrayList<>();
+            for(EthereumAccount account : accounts) {
+                if(!shards.contains(account.getShardNumber())){
+                    shards.add(account.getShardNumber());
+                }
+            }
+            // if the size of the shards list is 1 then they are in the same shard
+            if(shards.size() == 1){
+                // process tx
+                Node from = this.txToSender.get(tx);
+                // send a committed intra-shard message to this node
+                CoordinationMessage message = new CoordinationMessage(tx, "intra-shard-committed");
+                // send the message
+                if(from != null){
+                    // System.out.println("Sending intra shard confirm to Node ID: " + from.getNodeID());
+                    this.broadcastMessageToNode(message, from);
+                }
+            }
+        }
     }
 
     @Override

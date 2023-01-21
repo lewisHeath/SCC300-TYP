@@ -2,6 +2,9 @@ package jabs.consensus.algorithm;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.ledgerdata.ethereum.EthereumTx;
@@ -13,10 +16,13 @@ import jabs.network.node.nodes.pbft.PBFTShardedNode;
 
 public class ShardLedCrossShardConsensus implements CrossShardConsensus{
 
+    private int viewNumber;
     private PBFTShardedNode node;
+    private Queue<EthereumTx> txQueue = new LinkedList<EthereumTx>();
     private ArrayList<EthereumAccount> lockedAccounts = new ArrayList<EthereumAccount>();
     private HashMap<EthereumAccount, EthereumTx> lockedAccountsToTransactions = new HashMap<EthereumAccount, EthereumTx>();
     private HashMap<EthereumTx, ArrayList<Integer>> txToShards = new HashMap<EthereumTx, ArrayList<Integer>>();
+    private HashSet<EthereumTx> seenTxs = new HashSet<EthereumTx>();
     private ArrayList<EthereumTx> preparedTxs = new ArrayList<EthereumTx>();
     private ArrayList<EthereumTx> secondPhaseTxs = new ArrayList<EthereumTx>();
     private HashMap<EthereumTx, Node> preparedTxsFrom = new HashMap<EthereumTx, Node>();
@@ -26,6 +32,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     private HashMap<EthereumTx, HashMap<Integer, Integer>> txToCommits = new HashMap<EthereumTx, HashMap<Integer, Integer>>();
 
     public ShardLedCrossShardConsensus(PBFTShardedNode node){
+        this.viewNumber = 0;
         this.node = node;
     }
 
@@ -78,44 +85,51 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 accountsInThisShard.add(account);
             }
         }
+
+        /*
+         * if the message is from the client, add to the seenTxs then
+         * if this node is the leader it will broadcast the new tx to the nodes in the shard
+         * if the message is from another node, and they are the leader, perform the checks for the tx...
+         */
+
         // check if the accounts are locked
         if (areAccountsLocked(accountsInThisShard)) {
             // send prepareNOTOK
             CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK");
             // send to all nodes in this shard
             node.broadcastMessage(message);
-        } else {
-            // lock the accounts
-            for (EthereumAccount account : accountsInThisShard) {
-                lockedAccounts.add(account);
-                lockedAccountsToTransactions.put(account, tx);
-            }
-            // send prepareOK
-            CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
-            // send to all nodes in this shard
-            node.broadcastMessage(message);
-            // add the tx to the prepared txs
-            preparedTxs.add(tx);
-            preparedTxsFrom.put(tx, from);
-            // add the node to the agreed nodes
-            ArrayList<Node> agreedNodes = new ArrayList<Node>();
-            agreedNodes.add(node);
-            txToAgreedNodes.put(tx, agreedNodes);
-            // add the tx to the disagreed nodes
-            ArrayList<Node> disagreedNodes = new ArrayList<Node>();
-            txToDisagreedNodes.put(tx, disagreedNodes);
-            // add the tx to the aborts
-            HashMap<Integer, Integer> aborts = new HashMap<Integer, Integer>();
-            // add the tx to the commits
-            HashMap<Integer, Integer> commits = new HashMap<Integer, Integer>();
-            // init the hashmaps with the shards with a vote of 0
-            for (Integer shard : shards) {
-                aborts.put(shard, 0);
-                commits.put(shard, 0);
-            }
-            txToAborts.put(tx, aborts);
-            txToCommits.put(tx, commits);
+            return;
         }
+        // lock the accounts
+        for (EthereumAccount account : accountsInThisShard) {
+            lockedAccounts.add(account);
+            lockedAccountsToTransactions.put(account, tx);
+        }
+        // send prepareOK
+        CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
+        // send to all nodes in this shard
+        node.broadcastMessage(message);
+        // add the tx to the prepared txs
+        preparedTxs.add(tx);
+        preparedTxsFrom.put(tx, from);
+        // add the node to the agreed nodes
+        ArrayList<Node> agreedNodes = new ArrayList<Node>();
+        agreedNodes.add(node);
+        txToAgreedNodes.put(tx, agreedNodes);
+        // add the tx to the disagreed nodes
+        ArrayList<Node> disagreedNodes = new ArrayList<Node>();
+        txToDisagreedNodes.put(tx, disagreedNodes);
+        // add the tx to the aborts
+        HashMap<Integer, Integer> aborts = new HashMap<Integer, Integer>();
+        // add the tx to the commits
+        HashMap<Integer, Integer> commits = new HashMap<Integer, Integer>();
+        // init the hashmaps with the shards with a vote of 0
+        for (Integer shard : shards) {
+            aborts.put(shard, 0);
+            commits.put(shard, 0);
+        }
+        txToAborts.put(tx, aborts);
+        txToCommits.put(tx, commits);
     }
 
     private void processPrepareOK(Node from, EthereumTx tx) {

@@ -1,6 +1,7 @@
 package jabs.network.node.nodes;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import jabs.consensus.algorithm.ClientLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.EdgeNodeProtocol;
@@ -10,6 +11,7 @@ import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.network.message.CoordinationMessage;
+import jabs.network.message.DataMessage;
 import jabs.network.message.Message;
 import jabs.network.message.Packet;
 import jabs.network.networks.Network;
@@ -25,6 +27,7 @@ public class ShardedClient extends Node{
     private EdgeNodeProtocol protocol;
     protected Simulator.ScheduledEvent txGenerationProcess;
     private int timeBetweenTxs;
+    private HashMap<EthereumTx, Integer> intraShardTxCommitCount;
 
     public ShardedClient(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth, int timeBetweenTxs) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
@@ -32,6 +35,7 @@ public class ShardedClient extends Node{
         // this needs to be modified for allowing either client led or shard led to be used
         this.protocol = new ShardLedEdgeNodeProtocol(this, network);
         this.timeBetweenTxs = timeBetweenTxs;
+        this.intraShardTxCommitCount = new HashMap<EthereumTx, Integer>();
     }
 
     @Override
@@ -44,10 +48,36 @@ public class ShardedClient extends Node{
             String type = ((CoordinationMessage) message).getType();
             // get the shard the message came from
             int shard = ((PBFTShardedNode) packet.getFrom()).getShardNumber();
+            if(type.equals("intra-shard-committed")){
+                // process intra shard committed tx
+                this.processIntraShardCommittedTx((EthereumTx) data, shard);
+            }
             // System.out.println("Client recieved " + type + " from node: " + packet.getFrom().getNodeID());
             if (data instanceof EthereumTx) {
                 EthereumTx tx = (EthereumTx) data;
                 this.protocol.processCoordinationMessage(tx, shard, type, (PBFTShardedNode) packet.getFrom());
+            }
+        }
+    }
+
+    private void processIntraShardCommittedTx(EthereumTx data, int shard) {
+        // check if the tx is in the list of txs
+        if(this.txs.contains(data)){
+            // check if the tx is in the list of intra shard txs
+            if(this.intraShardTxCommitCount.containsKey(data)){
+                // increment the commit count
+                int commitCount = this.intraShardTxCommitCount.get(data);
+                commitCount++;
+                this.intraShardTxCommitCount.put(data, commitCount);
+                // check if the commit count is equal to the number of shards
+                if(commitCount >= ((PBFTShardedNetwork) this.network).getF() + 1){
+                    // remove the tx from the list of txs
+                    this.txs.remove(data);
+                    // remove the tx from the list of intra shard txs
+                    this.intraShardTxCommitCount.remove(data);
+                    // increment the number of committed txs
+                    ((PBFTShardedNetwork) this.network).committedTransactions++;
+                }
             }
         }
     }
@@ -65,11 +95,12 @@ public class ShardedClient extends Node{
         int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
         if (senderShard != receiverShard) {
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
+            this.sendCrossShardTransaction(tx);
         } else {
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
+            this.intraShardTxCommitCount.put(tx, 0);
+            this.sendTransaction(tx, senderShard);
         }
-        // send the tx to the network
-        this.sendTransaction(tx);
     }
 
     public void startTxGenerationProcess() {
@@ -81,7 +112,19 @@ public class ShardedClient extends Node{
         this.simulator.removeEvent(this.txGenerationProcess);
     }
 
-    private void sendTransaction(EthereumTx tx) {
+    private void sendTransaction(EthereumTx tx, int shard) {
+        // send to at least f + 1 nodes in the shard
+        // int f = ((PBFTShardedNetwork) this.network).getF();
+        ArrayList<PBFTShardedNode> nodes = ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shard);
+        for(Node node : nodes){
+            this.networkInterface.addToUpLinkQueue(
+                new Packet(this, node, 
+                new DataMessage(tx))
+            );
+        }
+    }
+
+    private void sendCrossShardTransaction(EthereumTx tx) {
         this.protocol.sendTransaction(tx);
     }
 }
