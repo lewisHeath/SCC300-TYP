@@ -1,11 +1,14 @@
 package jabs.ledgerdata.ethereum;
 
+import java.util.ArrayList;
+
 import jabs.ledgerdata.Tx;
 
 public class EthereumTx extends Tx<EthereumTx> {
     final long gas;
     private EthereumAccount sender;
     private EthereumAccount receiver;
+    private ArrayList<EthereumAccount> receivers;
 
     public EthereumTx(int size, long gas) {
         super(size, 0); // Ethereum does not use transaction hashes in network communication
@@ -24,12 +27,27 @@ public class EthereumTx extends Tx<EthereumTx> {
         this.sender = sender;
     }
 
+    public void setReceivers(ArrayList<EthereumAccount> receivers) {
+        this.receivers = receivers;
+    }
+
+    public ArrayList<EthereumAccount> getReceivers() {
+        return receivers;
+    }
+
     public EthereumAccount getReceiver() {
         return receiver;
     }
 
     public void setReceiver(EthereumAccount receiver) {
         this.receiver = receiver;
+    }
+
+    public ArrayList<EthereumAccount> getAllInvolvedAccounts() {
+        ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
+        accounts.add(this.sender);
+        accounts.addAll(this.receivers);
+        return accounts;
     }
 
     // @Override

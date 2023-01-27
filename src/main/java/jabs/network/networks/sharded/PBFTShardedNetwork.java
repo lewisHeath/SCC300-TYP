@@ -47,7 +47,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.clients = new ArrayList<ShardedClient>();
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         // add accounts
-        this.generateAccounts(100000);
+        this.generateAccounts(1000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
@@ -229,5 +229,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int getF() {
         // get the size of one of the shards and return a third of it
         return (int) Math.ceil((double) this.shards.get(0).size() / 3);
+    }
+
+    public int getNumberOfShards() {
+        return this.numberOfShards;
     }
 }

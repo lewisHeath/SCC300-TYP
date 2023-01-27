@@ -85,15 +85,37 @@ public class ShardedClient extends Node{
     @Override
     public void generateNewTransaction() {
         EthereumTx tx = TransactionFactory.sampleEthereumTransaction(network.getRandom());
-        // get 2 random accounts from the network
-        EthereumAccount sender = ((PBFTShardedNetwork) network).getRandomAccount();
-        EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccount();
-        tx.setSender(sender);
-        tx.setReceiver(receiver);
+        // somehow decide how many shards/accounts should be involved in the transaction TODO
+        // for now, i will randomly select between 2 and 10 accounts
+        int numAccounts = network.getRandom().nextInt(3) + 2;
+        // EthereumAccount sender = ((PBFTShardedNetwork) network).getRandomAccount();
+        // EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccount();
+        // tx.setSender(sender);
+        // tx.setReceiver(receiver);
+
+        ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
+        for (int i = 0; i < numAccounts; i++) {
+            accounts.add(((PBFTShardedNetwork) network).getRandomAccount());
+        }
+        // set sender and receiver(s)
+        tx.setSender(accounts.get(0));
+        accounts.remove(0);
+        tx.setReceiver(accounts.get(0));
+        tx.setReceivers(accounts);
+
         txs.add(tx);
         int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
-        int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
-        if (senderShard != receiverShard) {
+        // check if the sender shard is not the same as ANY of the receiver shards
+        boolean crossShard = false;
+        for (EthereumAccount account : tx.getReceivers()) {
+            int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(account);
+            if (senderShard != receiverShard) {
+                crossShard = true;
+                break;
+            }
+        }
+
+        if (crossShard) {
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
             this.sendCrossShardTransaction(tx);
         } else {

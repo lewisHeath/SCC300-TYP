@@ -58,6 +58,7 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                 if(this.txToAborts.get(tx).values().stream().anyMatch(x -> x >= 2 * ((PBFTShardedNetwork) this.network).getF())){
                     // the tx is aborted, add to queue of txs to try again maybe and remove from data structure
                     this.preparedTxs.remove(tx);
+                    System.out.println("Transaction " + tx + " was aborted");
                 }
             }
         }

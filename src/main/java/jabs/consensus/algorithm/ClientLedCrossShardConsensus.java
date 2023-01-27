@@ -30,8 +30,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         // get all involved accounts in the transaction and store them in an ArrayList
         ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
         // this needs upgrading to handle smart contract transactions
-        accounts.add(tx.getSender());
-        accounts.add(tx.getReceiver());
+        accounts.addAll(tx.getAllInvolvedAccounts());
         // get the accounts that are mapped to this shard
         ArrayList<EthereumAccount> shardAccounts = node.getShardAccounts();
         ArrayList<EthereumAccount> accountsInThisShard = new ArrayList<EthereumAccount>();
@@ -115,8 +114,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                 // if the transaction is in the prepared transactions list, unlock the accounts
                 ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
                 // this needs upgrading to handle smart contract transactions
-                accounts.add(tx.getSender());
-                accounts.add(tx.getReceiver());
+                accounts.addAll(tx.getAllInvolvedAccounts());
                 // unlock the accounts
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);

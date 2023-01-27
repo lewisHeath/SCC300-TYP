@@ -117,8 +117,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         for(EthereumTx tx : block.getTransactions()){
             // this will change for smart contract txs...
             ArrayList<EthereumAccount> accounts = new ArrayList<>();
-            accounts.add(tx.getSender());
-            accounts.add(tx.getReceiver());
+            accounts.addAll(tx.getAllInvolvedAccounts());
             // check if they are in the same shard
             ArrayList<Integer> shards = new ArrayList<>();
             for(EthereumAccount account : accounts) {

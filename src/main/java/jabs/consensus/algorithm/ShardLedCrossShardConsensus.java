@@ -66,8 +66,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
 
     private void processPrePrepare(Node from, EthereumTx tx) {
         ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
-        accounts.add(tx.getSender());
-        accounts.add(tx.getReceiver());
+        accounts.addAll(tx.getAllInvolvedAccounts());
         // make a list of the shards involved in this tx
         ArrayList<Integer> shards = new ArrayList<Integer>();
         for (EthereumAccount account : accounts) {
@@ -92,23 +91,6 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
          * if the message is from another node, and they are the leader, perform the checks for the tx...
          */
 
-        // check if the accounts are locked
-        if (areAccountsLocked(accountsInThisShard)) {
-            // send prepareNOTOK
-            CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK");
-            // send to all nodes in this shard
-            node.broadcastMessage(message);
-            return;
-        }
-        // lock the accounts
-        for (EthereumAccount account : accountsInThisShard) {
-            lockedAccounts.add(account);
-            lockedAccountsToTransactions.put(account, tx);
-        }
-        // send prepareOK
-        CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
-        // send to all nodes in this shard
-        node.broadcastMessage(message);
         // add the tx to the prepared txs
         preparedTxs.add(tx);
         preparedTxsFrom.put(tx, from);
@@ -130,6 +112,25 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         }
         txToAborts.put(tx, aborts);
         txToCommits.put(tx, commits);
+
+        // check if the accounts are locked
+        if (areAccountsLocked(accountsInThisShard)) {
+            // send prepareNOTOK
+            CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK");
+            // send to all nodes in this shard
+            node.broadcastMessage(message);
+            // System.out.println("Accounts are locked");
+            return;
+        }
+        // lock the accounts
+        for (EthereumAccount account : accountsInThisShard) {
+            lockedAccounts.add(account);
+            lockedAccountsToTransactions.put(account, tx);
+        }
+        // send prepareOK
+        CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
+        // send to all nodes in this shard
+        node.broadcastMessage(message);
     }
 
     private void processPrepareOK(Node from, EthereumTx tx) {
@@ -186,8 +187,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             if(txToAborts.get(tx).values().stream().anyMatch(x -> x >= 2 * ((PBFTShardedNetwork)node.getNetwork()).getF())){
                 // unlock the accounts
                 ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
-                accounts.add(tx.getSender());
-                accounts.add(tx.getReceiver());
+                accounts.addAll(tx.getAllInvolvedAccounts());
                 for (EthereumAccount account : accounts) {
                     if (lockedAccountsToTransactions.get(account) == tx) {
                         lockedAccounts.remove(account);
@@ -226,8 +226,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             if(preparedTxsFrom.containsKey(tx)){
                 ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
                 // this needs upgrading to handle smart contract transactions
-                accounts.add(tx.getSender());
-                accounts.add(tx.getReceiver());
+                accounts.addAll(tx.getAllInvolvedAccounts());
                 // unlock the accounts
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
