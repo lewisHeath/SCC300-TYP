@@ -57,6 +57,8 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     }
 
     private void processPrePrepareMessage(ArrayList<EthereumAccount> accountsInThisShard, Node from, EthereumTx tx) {
+        // add the transaction and the client node to the prepared transactions from
+        preparedTransactionsFrom.put(tx, from);
         // check if the accounts for the transaction is locked
         for (EthereumAccount account : accountsInThisShard) {
             if (lockedAccounts.contains(account)) {
@@ -77,9 +79,6 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         // System.out.println("Sending prepareOK message back to client node");
         // add the transaction to the prepared transactions list
         preparedTransactions.add(tx);
-        // add the transaction and the client node to the prepared transactions from
-        // list
-        preparedTransactionsFrom.put(tx, from);
     }
 
     private void processCommitMessage(EthereumTx tx, Node from) {

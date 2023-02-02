@@ -51,7 +51,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.lockedAccounts = new HashMap<>();
         this.shardAccounts = new ArrayList<>();
         // this needs to be mofified to support shard led
-        this.crossShardConsensus = new ShardLedCrossShardConsensus(this);
+        this.crossShardConsensus = new ClientLedCrossShardConsensus(this);
         // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
@@ -187,9 +187,10 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             gas += tx.getGas();
             size += tx.getSize();
         }
-        if(size == 0) size = 1000000;
+        if(size == 0) size = 1000;
+        // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " creating block with size: " + size);
         // create a new block
-        PBFTBlock block = new PBFTBlock(size, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
+        PBFTBlock block = new PBFTBlock(size * 100, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
         // add the transactions to the block
         block.setTransactions(txs);
         removeTransactionsFromMempool(block);

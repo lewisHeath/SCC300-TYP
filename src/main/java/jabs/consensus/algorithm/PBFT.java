@@ -10,6 +10,7 @@ import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTNode;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.BlockConfirmationEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -188,6 +189,9 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
     @Override
     protected void updateChain() {
         this.confirmedBlocks.add(this.currentMainChainHead);
+        // create block confirmation event
+        BlockConfirmationEvent blockConfirmationEvent = new BlockConfirmationEvent(this.peerBlockchainNode.getSimulator().getSimulationTime(), this.peerBlockchainNode, this.currentMainChainHead);
+        this.peerBlockchainNode.getSimulator().putEvent(blockConfirmationEvent, 0);
     }
 
     private void handleCrossShardTransactions() {
