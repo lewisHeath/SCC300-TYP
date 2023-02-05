@@ -15,6 +15,24 @@ import matplotlib.pyplot as plt
 ndf = pd.read_csv('../output/sharded-pbft-block-log.csv')
 # only keep data which NodeID is the same as BlockCreator
 ndf = ndf[ndf['NodeID'] == ndf['BlockCreator']]
-# line graph with time on the x axis and the number of blocks created on the y axis
-ndf.plot(x='Time', y='BlockHeight', kind='line')
+# separate the data by the shard column
+ndf = ndf.groupby(['Shard']).count()
+# shard_block_count = ndf['BlockCreator']
+
+df = pd.read_csv('../output/sharded-pbft-block-log.csv')
+# this data contains the event from where a block was added to a chain, it has the node id that is emitting the event and the block creator and shard number
+# we only want the data where the node id is the same as the block creator
+df = df[df['NodeID'] == df['BlockCreator']]
+# i want to plot a line graph where the x axis is the Time and the y axis is the block height, i want to separate the data by the shard number and have a different line for each shard,  i want to plot the data for each shard in a different color
+
+# separate the data by the shard column
+df = df.groupby(['Shard'])
+# plot the data
+for name, group in df:
+    plt.plot(group['Time'], group['BlockHeight'], label=name)
+# label the axes
+plt.xlabel('Time')
+plt.ylabel('Block Height')
+plt.title('Block Height over Time In Each Shard')
+plt.legend()
 plt.show()
