@@ -17,6 +17,7 @@ ndf = pd.read_csv('../output/sharded-pbft-block-log.csv')
 ndf = ndf[ndf['NodeID'] == ndf['BlockCreator']]
 # separate the data by the shard column
 ndf = ndf.groupby(['Shard']).count()
+
 # shard_block_count = ndf['BlockCreator']
 
 df = pd.read_csv('../output/sharded-pbft-block-log.csv')

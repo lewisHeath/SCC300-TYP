@@ -33,7 +33,7 @@ public class ShardedClient extends Node{
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
         this.txs = new ArrayList<EthereumTx>();
         // this needs to be modified for allowing either client led or shard led to be used
-        this.protocol = new ClientLedEdgeNodeProtocol(this, network);
+        this.protocol = new ShardLedEdgeNodeProtocol(this, network);
         this.timeBetweenTxs = timeBetweenTxs;
         this.intraShardTxCommitCount = new HashMap<EthereumTx, Integer>();
     }

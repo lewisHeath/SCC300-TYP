@@ -25,6 +25,8 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
 
     public void processCoordinationMessage(CoordinationMessage message, Node from) {
         // System.out.println("Processing coordination message");
+        // get the from node that was stored in the message
+        Node messageFrom = message.getFrom();
         // get the transaction from the message
         EthereumTx tx = (EthereumTx) message.getData();
         // get all involved accounts in the transaction and store them in an ArrayList
@@ -43,7 +45,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
 
         switch (message.getType()) {
             case "pre-prepare":
-                processPrePrepareMessage(accountsInThisShard, from, tx);
+                processPrePrepareMessage(accountsInThisShard, messageFrom, tx);
                 break;
             case "commit":
                 processCommitMessage(tx, from);

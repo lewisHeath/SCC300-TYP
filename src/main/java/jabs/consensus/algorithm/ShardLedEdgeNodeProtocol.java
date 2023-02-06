@@ -44,8 +44,8 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
             if(type.equals("committed")){
                 // increment vote for commit
                 this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
-                // check if each shards vote is above 2f 
-                if(this.txToCommits.get(tx).values().stream().allMatch(x -> x >= 2 * ((PBFTShardedNetwork) this.network).getF())){
+                // check if each shards vote is above f + 1
+                if(this.txToCommits.get(tx).values().stream().allMatch(x -> x > ((PBFTShardedNetwork) this.network).getF())){
                     // the transaction is committed
                     ((PBFTShardedNetwork) this.network).committedTransactions++;
                     // remove the tx from the data structures (and maybe to a list of committed txs)
@@ -55,10 +55,10 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                 // increment vote for abort
                 this.txToAborts.get(tx).put(shard, this.txToAborts.get(tx).get(shard) + 1);
                 // if ANY shards votes are above 2f
-                if(this.txToAborts.get(tx).values().stream().anyMatch(x -> x >= 2 * ((PBFTShardedNetwork) this.network).getF())){
+                if(this.txToAborts.get(tx).values().stream().anyMatch(x -> x > ((PBFTShardedNetwork) this.network).getF())){
                     // the tx is aborted, add to queue of txs to try again maybe and remove from data structure
                     this.preparedTxs.remove(tx);
-                    System.out.println("Transaction " + tx + " was aborted");
+                    // System.out.println("Transaction " + tx + " was aborted");
                 }
             }
         }
@@ -72,17 +72,18 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
          * 3. send the transaction in a pre-prepare message to the shards
          */
         
-         this.preparedTxs.add(tx);
+        this.preparedTxs.add(tx);
         // get the shards from the transaction
-        int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
-        int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceiver());
         ArrayList<Integer> shards = new ArrayList<Integer>();
+        shards.addAll(tx.getAllInvolvedShards());
+        Boolean crossShard = false;
+        if(shards.size() > 1) {
+            crossShard = true;
+        }
         // this will be modified to support more than 2 shards
-        shards.add(senderShard);
-        shards.add(receiverShard);
-        if(senderShard != receiverShard) {
+        if(crossShard) {
             // create pre-prepare message
-            CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare");
+            CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare", this.node);
             // initialise the data structures
             this.txToCommits.put(tx, new HashMap<Integer, Integer>());
             this.txToAborts.put(tx, new HashMap<Integer, Integer>());
@@ -103,11 +104,11 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
             // send the transaction normally to the shard
             DataMessage message = new DataMessage(tx);
             // send to all nodes in senderShard
-            // for(Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(senderShard)) {
-            //     node.getNodeNetworkInterface().addToUpLinkQueue(
-            //             new Packet(
-            //                     node, n, message));
-            // }
+            for(Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shards.get(0))) {
+                node.getNodeNetworkInterface().addToUpLinkQueue(
+                        new Packet(
+                                node, n, message));
+            }
         }
     }
     

@@ -51,7 +51,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.lockedAccounts = new HashMap<>();
         this.shardAccounts = new ArrayList<>();
         // this needs to be mofified to support shard led
-        this.crossShardConsensus = new ClientLedCrossShardConsensus(this);
+        this.crossShardConsensus = new ShardLedCrossShardConsensus(this);
         // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
@@ -135,6 +135,8 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
                 if(from != null){
                     // System.out.println("Sending intra shard confirm to Node ID: " + from.getNodeID());
                     this.broadcastMessageToNode(message, from);
+                } else {
+                    // System.out.println("CRITICAL ERROR: from node is null");
                 }
             }
         }

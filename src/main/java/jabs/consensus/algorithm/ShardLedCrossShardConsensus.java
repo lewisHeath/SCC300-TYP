@@ -44,10 +44,11 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
          */
 
         EthereumTx tx = (EthereumTx) message.getData();
+        Node messageFrom = message.getFrom();
 
         switch (message.getType()) {
             case "pre-prepare":
-                processPrePrepare(from, tx);
+                processPrePrepare(messageFrom, tx);
                 break;
             case "prepareOK":
                 processPrepareOK(from , tx);
@@ -142,7 +143,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 agreedNodes.add(from);
             }
             // check if the no of agreed nodes is greater than 2f 
-            if(agreedNodes.size() > 2 * ((PBFTShardedNetwork)node.getNetwork()).getF()){
+            if(agreedNodes.size() > ((PBFTShardedNetwork)node.getNetwork()).getF()){
                 // send commit message to all shards in the tx
                 this.sendCommitOrAbort("commit", tx);
                 // add to phase two
@@ -160,7 +161,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 disagreedNodes.add(from);
             }
             // check if the no of disagreed nodes is greater than 2f
-            if(disagreedNodes.size() > 2 * ((PBFTShardedNetwork)node.getNetwork()).getF()){
+            if(disagreedNodes.size() > ((PBFTShardedNetwork)node.getNetwork()).getF()){
                 // send abort message to all shards in the tx
                 this.sendCommitOrAbort("abort", tx);
             }
@@ -183,8 +184,8 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             int shard = ((PBFTShardedNode)from).getShardNumber();
             // get the aborts for this tx and increment the vote by 1
             this.txToAborts.get(tx).put(shard, this.txToAborts.get(tx).get(shard) + 1);
-            // check if any of the no of aborts is greater than 2f
-            if(txToAborts.get(tx).values().stream().anyMatch(x -> x >= 2 * ((PBFTShardedNetwork)node.getNetwork()).getF())){
+            // check if any of the no of aborts is greater than f + 1
+            if(txToAborts.get(tx).values().stream().anyMatch(x -> x > ((PBFTShardedNetwork)node.getNetwork()).getF())){
                 // unlock the accounts
                 ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
                 accounts.addAll(tx.getAllInvolvedAccounts());
@@ -209,8 +210,8 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             int shard = ((PBFTShardedNode)from).getShardNumber();
             // get the commits for this tx and increment the vote by 1
             this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
-            // check if any of the no of commits is greater than 2f
-            if(txToCommits.get(tx).values().stream().anyMatch(x -> x >= 2 * ((PBFTShardedNetwork)node.getNetwork()).getF())){
+            // check if any of the no of commits is greater than f + 1
+            if(txToCommits.get(tx).values().stream().anyMatch(x -> x > ((PBFTShardedNetwork)node.getNetwork()).getF())){
                 // add tx to mempool
                 node.broadcastTransactionToShard(tx, node.getShardNumber());
                 // remove tx from second phase list

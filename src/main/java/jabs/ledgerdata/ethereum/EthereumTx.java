@@ -50,6 +50,23 @@ public class EthereumTx extends Tx<EthereumTx> {
         return accounts;
     }
 
+    public ArrayList<Integer> getAllInvolvedShards() {
+        ArrayList<Integer> shards = new ArrayList<Integer>();
+        for (EthereumAccount account : this.getAllInvolvedAccounts()) {
+            shards.add(account.getShardNumber());
+        }
+        // remove duplicates
+        for (int i = 0; i < shards.size(); i++) {
+            for (int j = i + 1; j < shards.size(); j++) {
+                if (shards.get(i) == shards.get(j)) {
+                    shards.remove(j);
+                    j--;
+                }
+            }
+        }
+        return shards;
+    }
+
     // @Override
     // public int hashCode() {
     //     // create a hash
