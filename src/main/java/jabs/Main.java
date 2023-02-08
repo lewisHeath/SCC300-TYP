@@ -21,7 +21,7 @@ public class Main {
         // generate a random number between 1 and 1000000
         // int randomNum = 1 + (int)(Math.random() * 1000000);
         int randomNum = 1;
-        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 1, 20, 1, 1, 3600);
+        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 2, 20, 1, 1, 3600);
         scenario.AddNewLogger(new VoteLogger(Paths.get("output/sharded-pbft-block-delivery-log.csv")));
         scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/sharded-pbft-coordination-messages-log.csv")));
         scenario.AddNewLogger(new ShardedBlockConfirmationLogger(Paths.get("output/sharded-pbft-block-log.csv")));

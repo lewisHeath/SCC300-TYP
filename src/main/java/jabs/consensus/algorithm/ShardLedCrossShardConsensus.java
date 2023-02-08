@@ -48,7 +48,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
 
         switch (message.getType()) {
             case "pre-prepare":
-                processPrePrepare(messageFrom, tx);
+                processPrePrepare(messageFrom, tx, from);
                 break;
             case "prepareOK":
                 processPrepareOK(from , tx);
@@ -65,7 +65,13 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         }
     }
 
-    private void processPrePrepare(Node from, EthereumTx tx) {
+    private void processPrePrepare(Node from, EthereumTx tx, Node sentFrom) {
+
+        /*
+         * only actually process if this node is the leader and it has come from a client OR
+         * if this has come from another node and they are the leader TODO
+         */
+
         ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
         accounts.addAll(tx.getAllInvolvedAccounts());
         // make a list of the shards involved in this tx
@@ -114,24 +120,32 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         txToAborts.put(tx, aborts);
         txToCommits.put(tx, commits);
 
-        // check if the accounts are locked
-        if (areAccountsLocked(accountsInThisShard)) {
-            // send prepareNOTOK
-            CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK");
+        /*
+         * Only do this if the message has come from the leader or you are the leader
+         */
+
+        int ID = node.getNodeID() % ((PBFTShardedNetwork)this.node.getNetwork()).getNumberOfShards();
+
+        if(ID == this.viewNumber || sentFrom.getNodeID() == this.viewNumber){
+            // check if the accounts are locked
+            if (areAccountsLocked(accountsInThisShard)) {
+                // send prepareNOTOK
+                CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK");
+                // send to all nodes in this shard
+                node.broadcastMessage(message);
+                // System.out.println("Accounts are locked");
+                return;
+            }
+            // lock the accounts
+            for (EthereumAccount account : accountsInThisShard) {
+                lockedAccounts.add(account);
+                lockedAccountsToTransactions.put(account, tx);
+            }
+            // send prepareOK
+            CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
             // send to all nodes in this shard
             node.broadcastMessage(message);
-            // System.out.println("Accounts are locked");
-            return;
         }
-        // lock the accounts
-        for (EthereumAccount account : accountsInThisShard) {
-            lockedAccounts.add(account);
-            lockedAccountsToTransactions.put(account, tx);
-        }
-        // send prepareOK
-        CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
-        // send to all nodes in this shard
-        node.broadcastMessage(message);
     }
 
     private void processPrepareOK(Node from, EthereumTx tx) {
@@ -148,6 +162,10 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 this.sendCommitOrAbort("commit", tx);
                 // add to phase two
                 secondPhaseTxs.add(tx);
+                // increment view number
+                this.viewNumber++;
+                // if this node is the primary, then propose a new tx
+                // TODO
             }
         }
     }
@@ -164,6 +182,10 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             if(disagreedNodes.size() > ((PBFTShardedNetwork)node.getNetwork()).getF()){
                 // send abort message to all shards in the tx
                 this.sendCommitOrAbort("abort", tx);
+                // increment view number
+                this.viewNumber++;
+                // if this node is the primary, then propose a new tx
+                // TODO
             }
         }
     }
