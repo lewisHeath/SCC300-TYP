@@ -121,7 +121,7 @@ public class ShardedClient extends Node{
         } else {
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);
-            this.sendTransaction(tx, senderShard);
+            // this.sendTransaction(tx, senderShard);
         }
     }
 
@@ -131,7 +131,7 @@ public class ShardedClient extends Node{
     }
 
     public void stopTxGenerationProcess() {
-        this.simulator.removeEvent(this.txGenerationProcess);
+        // this.simulator.removeEvent(this.txGenerationProcess);
     }
 
     private void sendTransaction(EthereumTx tx, int shard) {

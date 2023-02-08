@@ -57,6 +57,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
 
     @Override
     public void processNewTx(EthereumTx tx, Node from) {
+        System.out.println("Node: " + this.nodeID + " received tx " + " from Node: " + from.getNodeID() + " in shard: " + shardNumber);
         // for now assuming this only happens when another shard sends the transaction to this shard
         // add it to the mempool
         if(from instanceof PBFTShardedNode) {

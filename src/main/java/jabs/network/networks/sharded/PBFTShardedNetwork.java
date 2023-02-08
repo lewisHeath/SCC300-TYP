@@ -36,6 +36,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int failures = 0;
     public int committedTransactions = 0;
     public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
+    EightySixCountries region;
     
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
@@ -46,12 +47,13 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.accountToShard = new HashMap<EthereumAccount, Integer>();
         this.clients = new ArrayList<ShardedClient>();
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
+        this.region = nodeDistribution.sampleRegion();
         // add accounts
         this.generateAccounts(1000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
-        EightySixCountries region = nodeDistribution.sampleRegion();
+        // EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of node " + nodeID + " is " + region);
         return new PBFTShardedNode(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region),
@@ -60,7 +62,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     }
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
-        EightySixCountries region = nodeDistribution.sampleRegion();
+        // EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of client " + nodeID + " is " + region);
         return new ShardedClient(simulator, this, nodeID,
                 this.sampleDownloadBandwidth(region), 
@@ -233,5 +235,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public int getNumberOfShards() {
         return this.numberOfShards;
+    }
+
+    public int getNodesPerShard() {
+        return this.nodesPerShard;
     }
 }

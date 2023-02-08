@@ -42,6 +42,7 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
         // check if the transaction is in the prepared list
         if(this.preparedTxs.contains(tx)){
             if(type.equals("committed")){
+                System.out.println("Node " + this.node.getNodeID() + " received a commit message for tx " + tx + " from node " + from.getNodeID());
                 // increment vote for commit
                 this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
                 // check if each shards vote is above f + 1
@@ -100,6 +101,7 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                                     node, n, message));
                 }
             }
+            // System.out.println("Node " + this.node.getNodeID() + " sent a pre-prepare message for tx " + tx);
         } else {
             // send the transaction normally to the shard
             DataMessage message = new DataMessage(tx);
