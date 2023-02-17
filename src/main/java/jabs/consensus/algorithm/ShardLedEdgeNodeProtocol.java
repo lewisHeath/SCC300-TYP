@@ -95,22 +95,27 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
             }
             // send the message to the shards
             for(Integer shard : shards) {
-                for (Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shard)) {
-                    node.getNodeNetworkInterface().addToUpLinkQueue(
-                            new Packet(
-                                    node, n, message));
+                // send to one node in each shard
+                // Node nodeToSendTo = ((PBFTShardedNetwork)this.network).getRandomNodeInShard(shard);
+                // this.node.getNodeNetworkInterface().addToUpLinkQueue(
+                //     new Packet(this.node, nodeToSendTo, message)
+                // );
+                for(Node nodeToSendTo : ((PBFTShardedNetwork)network).getAllNodesFromShard(shard)){
+                    this.node.getNodeNetworkInterface().addToUpLinkQueue(
+                    new Packet(this.node, nodeToSendTo, message)
+                    );
                 }
             }
             // System.out.println("Node " + this.node.getNodeID() + " sent a pre-prepare message for tx " + tx);
         } else {
             // send the transaction normally to the shard
-            DataMessage message = new DataMessage(tx);
-            // send to all nodes in senderShard
-            for(Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shards.get(0))) {
-                node.getNodeNetworkInterface().addToUpLinkQueue(
-                        new Packet(
-                                node, n, message));
-            }
+            // DataMessage message = new DataMessage(tx);
+            // // send to all nodes in senderShard
+            // for(Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shards.get(0))) {
+            //     node.getNodeNetworkInterface().addToUpLinkQueue(
+            //             new Packet(
+            //                     node, n, message));
+            // }
         }
     }
     
