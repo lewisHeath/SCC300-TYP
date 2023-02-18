@@ -18,7 +18,10 @@ import jabs.network.stats.eightysixcountries.ethereum.EthereumNodeGlobalNetworkS
 import jabs.simulator.Simulator;
 import jabs.simulator.randengine.RandomnessEngine;
 
-public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
+import jabs.network.stats.lan.LAN100MNetworkStats;
+import jabs.network.stats.lan.SingleNodeType;
+
+public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
 
     private int numberOfShards;
     private int nodesPerShard;
@@ -39,7 +42,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     EightySixCountries region;
     
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs) {
-        super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
+        super(randomnessEngine, new LAN100MNetworkStats(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
         this.numberOfClients = numberOfClients;
@@ -56,8 +59,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of node " + nodeID + " is " + region);
         return new PBFTShardedNode(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(region),
-                this.sampleUploadBandwidth(region),
+                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE),
+                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
                 numNodesInShard, shardNumber);
     }
 
@@ -65,8 +68,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of client " + nodeID + " is " + region);
         return new ShardedClient(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(region), 
-                this.sampleUploadBandwidth(region),
+                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE), 
+                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
                 this.timeBetweenTxs);
     }
 
@@ -119,6 +122,13 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
                 shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
             }
         }
+
+        // tell each nodes cross shard consensus protocol what their ID is
+        for (int i = 0; i < numberOfShards; i++) {
+            for (int j = 0; j < shards.get(i).size(); j++) {
+                shards.get(i).get(j).getCrossShardConsensus().setID(j);
+            }
+        }
     }
 
     /**
@@ -127,7 +137,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     @Override
     public void addNode(Node node) {
         EightySixCountries region = nodeDistribution.sampleRegion();
-        this.addNode(node, region);
+        this.addNode(node, SingleNodeType.LAN_NODE);
     }
 
     public ArrayList<PBFTShardedNode> getShard(int shardNumber){
@@ -189,6 +199,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // get a random node from the shard
         int randomNodeIndex = this.getRandom().nextInt(shards.get(shardNumber).size());
         return shards.get(shardNumber).get(randomNodeIndex);
+    }
+
+    public PBFTShardedNode getNodeInShard(int shardNumber, int node){
+        return shards.get(shardNumber).get(node);
     }
 
     public ArrayList<ShardedClient> getClients() {

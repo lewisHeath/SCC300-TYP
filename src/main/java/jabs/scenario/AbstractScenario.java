@@ -122,12 +122,12 @@ public abstract class AbstractScenario {
             if (System.nanoTime() - lastProgressMessageTime > this.progressMessageIntervals) {
                 double realTime = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - simulationStartingTime);
                 double simulationTime = this.simulator.getSimulationTime();
-                System.err.printf(
-                        "Simulation in progress... " +
-                                "Elapsed Real Time: %d:%02d:%02d, Elapsed Simulation Time: %d:%02d:%02d, Simulation time raw: %d\n",
-                        (long)(realTime / 3600), (long)((realTime % 3600) / 60), (long)(realTime % 60),
-                        (long)(simulationTime / 3600), (long)((simulationTime % 3600) / 60), (long)(simulationTime % 60), (long)simulationTime
-                );
+                // System.err.printf(
+                //         "Simulation in progress... " +
+                //                 "Elapsed Real Time: %d:%02d:%02d, Elapsed Simulation Time: %d:%02d:%02d, Simulation time raw: %d\n",
+                //         (long)(realTime / 3600), (long)((realTime % 3600) / 60), (long)(realTime % 60),
+                //         (long)(simulationTime / 3600), (long)((simulationTime % 3600) / 60), (long)(simulationTime % 60), (long)simulationTime
+                // );
                 lastProgressMessageTime = System.nanoTime();
             }
         }

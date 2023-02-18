@@ -18,9 +18,14 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private ArrayList<EthereumTx> preparedTransactions = new ArrayList<EthereumTx>();
     private HashMap<EthereumTx, Node> preparedTransactionsFrom = new HashMap<EthereumTx, Node>();
     private HashMap<EthereumAccount, EthereumTx> lockedAccountsToTransactions = new HashMap<EthereumAccount, EthereumTx>();
+    private int thisID;
 
     public ClientLedCrossShardConsensus(PBFTShardedNode node) {
         this.node = node;
+    }
+
+    public void setID(int ID){
+        this.thisID = ID;
     }
 
     public void processCoordinationMessage(CoordinationMessage message, Node from) {

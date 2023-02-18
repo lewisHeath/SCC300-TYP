@@ -312,4 +312,8 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             new Packet(this, node, message)
         );
     }
+
+    public CrossShardConsensus getCrossShardConsensus() {
+        return this.crossShardConsensus;
+    }
 }

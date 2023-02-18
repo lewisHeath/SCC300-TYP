@@ -34,6 +34,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     private PHASE phase = PHASE.PRE_PREPARING;
     private Boolean sentPrePrepare = false;
     private int nodesInShard;
+    private int thisID;
 
     private enum PHASE {
         PRE_PREPARING,
@@ -44,6 +45,10 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         this.viewNumber = 0;
         this.node = node;
         this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
+    }
+
+    public void setID(int ID){
+        this.thisID = ID;
     }
 
     public void processCoordinationMessage(CoordinationMessage message, Node from) {
@@ -80,7 +85,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     private void processPrePrepare(Node clientFrom, EthereumTx tx, Node sentFrom) {
 
         // System.out.println(this.viewNumber % this.nodesInShard + " " + this.node.getNodeID());
-        System.out.println("Node: --" + node.getNodeID() + "-- received pre-prepare from Node: --" + sentFrom.getNodeID() + "-- in view: --" + this.viewNumber + "-- for tx: ----" + tx + "----");
+        System.out.println("Node: --" + node.getNodeID() + "-- received pre-prepare from Node: --" + sentFrom.getNodeID() + "-- in view: --" + this.viewNumber + "-- | " + this.viewNumber % this.nodesInShard + " | for tx: ----" + tx + "----");
 
         ArrayList<EthereumAccount> accounts = this.addTxToShardList(tx);
 
@@ -99,7 +104,6 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
          * if the message is from another node, and they are the leader, perform the checks for the tx...
          */
 
-        int thisID = ((PBFTShardedNetwork) node.getNetwork()).getIndexOfNode(node, node.getShardNumber());
 
         Boolean sentFromClient = false;
         if(clientFrom == sentFrom){
@@ -107,7 +111,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         }
 
         // if this node is the leader and it hasnt yet sent a pre-prepare to the rest of the shard, send it
-        if (thisID == this.viewNumber % this.nodesInShard && !sentPrePrepare && sentFromClient) {
+        if (thisID == 0 && !sentPrePrepare && sentFromClient) {
             // broadcast the tx to all nodes in this shard
             System.out.println("Node " + node.getNodeID() + " is the leader and is sending a pre-prepare message for tx " + tx);
             CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare", clientFrom);
@@ -222,45 +226,41 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     }
 
     private void processAbort(Node from, EthereumTx tx) {
-        if(secondPhaseTxs.contains(tx)){
-            // get shard from the node
-            int shard = ((PBFTShardedNode)from).getShardNumber();
-            // get the aborts for this tx and increment the vote by 1
-            this.txToAborts.get(tx).put(shard, this.txToAborts.get(tx).get(shard) + 1);
-            // check if any of the no of aborts is greater than f + 1
-            if(txToAborts.get(tx).values().stream().anyMatch(x -> x > 2 * ((PBFTShardedNetwork)node.getNetwork()).getF())){
-                // unlock the accounts
-                ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
-                accounts.addAll(tx.getAllInvolvedAccounts());
-                for (EthereumAccount account : accounts) {
-                    if (lockedAccountsToTransactions.get(account) == tx) {
-                        lockedAccounts.remove(account);
-                        lockedAccountsToTransactions.remove(account);
-                    }
+        // get shard from the node
+        int shard = ((PBFTShardedNode)from).getShardNumber();
+        // get the aborts for this tx and increment the vote by 1
+        this.txToAborts.get(tx).put(shard, this.txToAborts.get(tx).get(shard) + 1);
+        // check if any of the no of aborts is greater than f + 1
+        if(txToAborts.get(tx).values().stream().anyMatch(x -> x > 2 * ((PBFTShardedNetwork)node.getNetwork()).getF()) && secondPhaseTxs.contains(tx)){
+            // unlock the accounts
+            ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
+            accounts.addAll(tx.getAllInvolvedAccounts());
+            for (EthereumAccount account : accounts) {
+                if (lockedAccountsToTransactions.get(account) == tx) {
+                    lockedAccounts.remove(account);
+                    lockedAccountsToTransactions.remove(account);
                 }
-                // send aborted message to client
-                CoordinationMessage message = new CoordinationMessage(tx, "aborted");
-                node.sendMessageToNode(message, preparedTxsFrom.get(tx));
-                // remove tx from second phase list
-                secondPhaseTxs.remove(tx);
             }
+            // send aborted message to client
+            CoordinationMessage message = new CoordinationMessage(tx, "aborted");
+            node.sendMessageToNode(message, preparedTxsFrom.get(tx));
+            // remove tx from second phase list
+            secondPhaseTxs.remove(tx);
         }
     }
 
     private void processCommit(Node from, EthereumTx tx) {
         // System.out.println("Received commit, this ID: " + node.getNodeID() + " from ID: " + from.getNodeID() + " for tx: " + tx);
-        if(secondPhaseTxs.contains(tx)){
-            // get shard from the node
-            int shard = ((PBFTShardedNode)from).getShardNumber();
-            // get the commits for this tx and increment the vote by 1
-            this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
-            // check if any of the no of commits is greater than f + 1
-            if(txToCommits.get(tx).values().stream().allMatch(x -> x > 2 * ((PBFTShardedNetwork)node.getNetwork()).getF())){
-                // add tx to mempool
-                node.broadcastTransactionToShard(tx, node.getShardNumber());
-                // remove tx from second phase list
-                secondPhaseTxs.remove(tx);
-            }
+        // get shard from the node
+        int shard = ((PBFTShardedNode)from).getShardNumber();
+        // get the commits for this tx and increment the vote by 1
+        this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
+        // check if any of the no of commits is greater than f + 1
+        if(txToCommits.get(tx).values().stream().allMatch(x -> x > 2 * ((PBFTShardedNetwork)node.getNetwork()).getF()) && secondPhaseTxs.contains(tx)){
+            // add tx to mempool
+            node.broadcastTransactionToShard(tx, node.getShardNumber());
+            // remove tx from second phase list
+            secondPhaseTxs.remove(tx);
         }
     }
 
@@ -313,7 +313,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
 
     private void trySendPrePrepare() {
         // get the first tx from preparedTxs
-        if(preparedTxs.size() == 0){
+        if(preparedTxs.size() == 0 || this.thisID != 0){
             return;
         }
         EthereumTx tx = preparedTxs.get(0);
