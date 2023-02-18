@@ -9,10 +9,19 @@ public class EthereumTx extends Tx<EthereumTx> {
     private EthereumAccount sender;
     private EthereumAccount receiver;
     private ArrayList<EthereumAccount> receivers;
+    private Double creationTime;
 
     public EthereumTx(int size, long gas) {
         super(size, 0); // Ethereum does not use transaction hashes in network communication
         this.gas = gas;
+    }
+
+    public void setCreationTime(Double time){
+        this.creationTime = time;
+    }
+
+    public Double getCreationTime(){
+        return this.creationTime;
     }
 
     public long getGas() {

@@ -11,6 +11,7 @@ import jabs.network.networks.Network;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.TransactionCommittedEvent;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 
 public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
@@ -51,6 +52,8 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                     ((PBFTShardedNetwork) this.network).committedTransactions++;
                     // remove the tx from the data structures (and maybe to a list of committed txs)
                     this.preparedTxs.remove(tx);
+                    TransactionCommittedEvent txCommittedEvent = new TransactionCommittedEvent(this.node.getSimulator().getSimulationTime(), tx);
+                    this.node.getSimulator().putEvent(txCommittedEvent, 0);
                 }
             } else if(type.equals("aborted")) {
                 // increment vote for abort
