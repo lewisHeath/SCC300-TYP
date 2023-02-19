@@ -123,7 +123,7 @@ public class ShardedClient extends Node{
 
         if (crossShard) {
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
-            this.sendCrossShardTransaction(tx);
+            // this.sendCrossShardTransaction(tx);
         } else {
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);

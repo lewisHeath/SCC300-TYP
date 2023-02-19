@@ -129,6 +129,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             // check if the accounts are locked
             if (areAccountsLocked(accountsInThisShard)) {
                 // send prepareNOTOK
+                System.out.println("Node: --" + node.getNodeID() + "-- sent prepareNOTOK in view: --" + this.viewNumber + "-- | " + this.viewNumber % this.nodesInShard + " | for tx: ----" + tx + "----");
                 CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK", clientFrom);
                 // System.out.println("Sent prepareNOTOK at view " + this.viewNumber);
                 // send to all nodes in this shard
@@ -141,6 +142,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 lockedAccounts.add(account);
             }
             // send prepareOK
+            System.out.println("Node: --" + node.getNodeID() + "-- sent prepareOK in view: --" + this.viewNumber + "-- | " + this.viewNumber % this.nodesInShard + " | for tx: ----" + tx + "----");
             CoordinationMessage message = new CoordinationMessage(tx, "prepareOK", clientFrom);
             // System.out.println("Sent prepareOK at view " + this.viewNumber);
             // send to all nodes in this shard
