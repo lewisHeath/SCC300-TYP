@@ -34,7 +34,7 @@ public class ShardedClient extends Node{
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
         this.txs = new ArrayList<EthereumTx>();
         // this needs to be modified for allowing either client led or shard led to be used
-        this.protocol = new ShardLedEdgeNodeProtocol(this, network);
+        this.protocol = new ClientLedEdgeNodeProtocol(this, network);
         this.timeBetweenTxs = timeBetweenTxs;
         this.intraShardTxCommitCount = new HashMap<EthereumTx, Integer>();
     }
@@ -81,6 +81,7 @@ public class ShardedClient extends Node{
                     // generate transaction committed event
                     TransactionCommittedEvent txCommittedEvent = new TransactionCommittedEvent(this.simulator.getSimulationTime(), data);
                     this.simulator.putEvent(txCommittedEvent, 0);
+                    // System.out.println("Committed");
                 }
             }
         }
@@ -123,10 +124,12 @@ public class ShardedClient extends Node{
 
         if (crossShard) {
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
-            // this.sendCrossShardTransaction(tx);
+            tx.setCrossShard(true);
+            this.sendCrossShardTransaction(tx);
         } else {
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);
+            tx.setCrossShard(false);
             this.sendTransaction(tx, senderShard);
         }
     }

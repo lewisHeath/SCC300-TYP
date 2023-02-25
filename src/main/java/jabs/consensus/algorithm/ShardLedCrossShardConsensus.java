@@ -36,6 +36,8 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     private int nodesInShard;
     private int thisID;
 
+    private PBFTShardedNetwork network;
+
     private enum PHASE {
         PRE_PREPARING,
         PREPARING
@@ -44,6 +46,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     public ShardLedCrossShardConsensus(PBFTShardedNode node){
         this.viewNumber = 0;
         this.node = node;
+        this.network = (PBFTShardedNetwork)node.getNetwork();
         this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
     }
 
@@ -123,7 +126,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         }
 
         // if the message has not come from a client, it needs to be processed and then a prepareOK or prepareNOTOK sent
-        if (!sentFromClient && !prePrepareSent.contains(tx)) {
+        if (!sentFromClient && !prePrepareSent.contains(tx) && thisID == 0) {
             // System.out.println("Received pre-prepare at view " + this.viewNumber);
             prePrepareSent.add(tx);
             // check if the accounts are locked
@@ -133,7 +136,12 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK", clientFrom);
                 // System.out.println("Sent prepareNOTOK at view " + this.viewNumber);
                 // send to all nodes in this shard
-                node.broadcastMessage(message);
+                // FOR EVERY NODE
+                ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                // GET CROSS SHARD CONSENSUS AND FORCE MESSAGE
+                for(PBFTShardedNode node : nodes) {
+                    node.broadcastMessage(message);
+                }
                 // System.out.println("Accounts are locked");
                 return;
             }
@@ -146,7 +154,12 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             CoordinationMessage message = new CoordinationMessage(tx, "prepareOK", clientFrom);
             // System.out.println("Sent prepareOK at view " + this.viewNumber);
             // send to all nodes in this shard
-            node.broadcastMessage(message);
+            // FOR EVERY NODE
+            ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+            // GET CROSS SHARD CONSENSUS AND FORCE MESSAGE
+            for (PBFTShardedNode node : nodes) {
+                node.broadcastMessage(message);
+            }
             // System.out.println("Accounts are not locked");
             return;
         }
@@ -218,10 +231,17 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     }
 
     private void sendCommitOrAbort(String type, EthereumTx tx){
-        ArrayList<Integer> shards = txToShards.get(tx);
-        for (Integer shard : shards) {
-            CoordinationMessage message = new CoordinationMessage(tx, type, preparedTxsFrom.get(tx));
-            node.broadcastMessageToShard(message, shard);
+        if(thisID == 0){
+            ArrayList<Integer> shards = txToShards.get(tx);
+            for (Integer shard : shards) {
+                CoordinationMessage message = new CoordinationMessage(tx, type, preparedTxsFrom.get(tx));
+                // FORCE EVERY NODE
+                ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                // GET CROSS SHARD CONSENSUS AND FORCE MESSAGE
+                for (PBFTShardedNode node : nodes) {
+                    node.broadcastMessageToShard(message, shard);
+                }
+            }
         }
         // remove the tx from the prepared txs
         preparedTxs.remove(tx);
@@ -245,7 +265,14 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             }
             // send aborted message to client
             CoordinationMessage message = new CoordinationMessage(tx, "aborted");
-            node.sendMessageToNode(message, preparedTxsFrom.get(tx));
+            if(thisID == 0){
+                // FOR EVERY NODE
+                ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                // GET CROSS SHARD CONSENSUS AND FORCE MESSAGE
+                for (PBFTShardedNode node : nodes) {
+                    node.sendMessageToNode(message, preparedTxsFrom.get(tx));
+                }
+            }
             // remove tx from second phase list
             secondPhaseTxs.remove(tx);
         }
@@ -282,7 +309,14 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 // send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");
                 System.out.println("Sending committed message to client node " + preparedTxsFrom.get(tx).getNodeID() + " for tx " + tx + " from node " + node.getNodeID());
-                node.sendMessageToNode(message, preparedTxsFrom.get(tx));
+                if (thisID == 0) {
+                    // FOR EVERY NODE
+                    ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                    // GET CROSS SHARD CONSENSUS AND FORCE MESSAGE
+                    for (PBFTShardedNode node : nodes) {
+                        node.sendMessageToNode(message, preparedTxsFrom.get(tx));
+                    }
+                }
             }
         }
     }

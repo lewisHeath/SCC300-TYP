@@ -35,7 +35,7 @@ public class TransactionCommittedLogger extends AbstractCSVLogger {
 
     @Override
     protected String[] csvHeaderOutput() {
-        return new String[]{"Time", "Tx", "TxCreationTime"};
+        return new String[]{"Time", "Tx", "TxCreationTime", "CrossShard"};
     }
 
     @Override
@@ -47,7 +47,8 @@ public class TransactionCommittedLogger extends AbstractCSVLogger {
         return new String[] {
             Double.toString(this.scenario.getSimulator().getSimulationTime()),
             Integer.toString(tx.hashCode()),
-            Double.toString(tx.getCreationTime())
+            Double.toString(tx.getCreationTime()),
+            Boolean.toString(tx.getCrossShard())
         };
     }
     
