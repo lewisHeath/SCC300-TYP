@@ -3,6 +3,9 @@ package jabs.network.networks.sharded;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.commons.math3.distribution.BetaDistribution;
+import org.apache.commons.math3.distribution.ParetoDistribution;
+
 import jabs.consensus.config.ConsensusAlgorithmConfig;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
@@ -52,7 +55,7 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         this.region = nodeDistribution.sampleRegion();
         // add accounts
-        this.generateAccounts(10000);
+        this.generateAccounts(1000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
@@ -180,8 +183,13 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
 
     public EthereumAccount getRandomAccount() {
         // get a random account from the network
-        int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
-        return (EthereumAccount) accountToShard.keySet().toArray()[randomAccountIndex];
+
+        BetaDistribution betaDistribution = new BetaDistribution(0.5, 5);
+        int randomInt = (int) Math.round(betaDistribution.sample() * accountToShard.size());
+        // System.out.println("randInt: " + randomInt);
+
+        // int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
+        return (EthereumAccount) accountToShard.keySet().toArray()[randomInt];
     }
 
     public EthereumAccount getRandomAccountFromShard(int shardNumber) {

@@ -96,7 +96,7 @@ public class ShardedClient extends Node{
         EthereumTx tx = TransactionFactory.sampleEthereumTransaction(network.getRandom());
         tx.setCreationTime(this.simulator.getSimulationTime());
         // somehow decide how many shards/accounts should be involved in the transaction TODO
-        // for now, i will randomly select between 2 and 10 accounts
+        // for now, i will randomly select between 2 and 5 accounts
         int numAccounts = network.getRandom().nextInt(3) + 2;
 
 
