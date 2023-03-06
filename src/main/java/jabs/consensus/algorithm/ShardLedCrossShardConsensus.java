@@ -13,6 +13,8 @@ import jabs.network.message.CoordinationMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.AccountLockingEvent;
+import jabs.simulator.event.AccountUnlockingEvent;
 
 public class ShardLedCrossShardConsensus implements CrossShardConsensus{
 
@@ -143,11 +145,15 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                     node.broadcastMessage(message);
                 }
                 // System.out.println("Accounts are locked");
+
                 return;
             }
             // lock the accounts
             for (EthereumAccount account : accountsInThisShard) {
                 lockedAccounts.add(account);
+                // locking account event
+                AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                this.node.getSimulator().putEvent(event, 0);
             }
             // send prepareOK
             System.out.println("Node: --" + node.getNodeID() + "-- sent prepareOK in view: --" + this.viewNumber + "-- | " + this.viewNumber % this.nodesInShard + " | for tx: ----" + tx + "----");
@@ -305,6 +311,9 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
                     // System.out.println("Unlocking account " + account);
+                    // Unlocking account event
+                    AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                    this.node.getSimulator().putEvent(event, 0);
                 }
                 // send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");

@@ -184,9 +184,10 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
     public EthereumAccount getRandomAccount() {
         // get a random account from the network
 
-        BetaDistribution betaDistribution = new BetaDistribution(0.5, 5);
-        int randomInt = (int) Math.round(betaDistribution.sample() * accountToShard.size());
+        // BetaDistribution betaDistribution = new BetaDistribution(0.5, 5);
+        // int randomInt = (int) Math.round(betaDistribution.sample() * accountToShard.size());
         // System.out.println("randInt: " + randomInt);
+        int randomInt = this.randomnessEngine.nextInt(this.accountToShard.size());
 
         // int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
         return (EthereumAccount) accountToShard.keySet().toArray()[randomInt];

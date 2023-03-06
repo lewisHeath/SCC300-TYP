@@ -4,6 +4,8 @@ import jabs.network.message.CoordinationMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.AccountLockingEvent;
+import jabs.simulator.event.AccountUnlockingEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,6 +95,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         for (EthereumAccount account : accountsInThisShard) {
             lockedAccounts.add(account);
             lockedAccountsToTransactions.put(account, tx);
+            // account locking event
+            AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account);
+            this.node.getSimulator().putEvent(event, 0);
         }
         // send prepareOK message back to the client node
         CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
@@ -129,6 +134,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         for (EthereumAccount account : accountsInThisShard) {
             if (lockedAccountsToTransactions.get(account) == tx) {
                 lockedAccounts.remove(account);
+                // account unlocking event
+                AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                this.node.getSimulator().putEvent(event, 0);
                 lockedAccountsToTransactions.remove(account);
             }
         }
@@ -147,6 +155,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                 // unlock the accounts
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
+                    // account unlocking event
+                    AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                    this.node.getSimulator().putEvent(event, 0);
                     // System.out.println("Unlocking account " + account);
                 }
                 // send a committed message to the client node

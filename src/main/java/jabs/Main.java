@@ -31,6 +31,8 @@ public class Main {
         // scenario.AddNewLogger(new ShardedBlockConfirmationLogger(Paths.get("output/sharded-pbft-block-log.csv")));
         // scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/TxCommittedLog14.csv")));
         // files 5 - 14 are for client-led
+        scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/accountLockingLog.csv")));
+        scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/accountUnlockingLog.csv")));
         scenario.run();
 
         // double scale = 1000;
