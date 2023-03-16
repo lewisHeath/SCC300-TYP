@@ -10,6 +10,7 @@ public class EthereumTx extends Tx<EthereumTx> {
     private EthereumAccount receiver;
     private ArrayList<EthereumAccount> receivers;
     private Double creationTime;
+    private Boolean crossShard;
 
     public EthereumTx(int size, long gas) {
         super(size, 0); // Ethereum does not use transaction hashes in network communication
@@ -74,6 +75,14 @@ public class EthereumTx extends Tx<EthereumTx> {
             }
         }
         return shards;
+    }
+
+    public void setCrossShard(Boolean crossShard){
+        this.crossShard = crossShard;
+    }
+
+    public Boolean getCrossShard(){
+        return this.crossShard;
     }
 
     // @Override

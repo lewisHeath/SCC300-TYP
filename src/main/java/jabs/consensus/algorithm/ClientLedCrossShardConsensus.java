@@ -1,8 +1,11 @@
 package jabs.consensus.algorithm;
 
 import jabs.network.message.CoordinationMessage;
+import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.AccountLockingEvent;
+import jabs.simulator.event.AccountUnlockingEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,9 +22,13 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private HashMap<EthereumTx, Node> preparedTransactionsFrom = new HashMap<EthereumTx, Node>();
     private HashMap<EthereumAccount, EthereumTx> lockedAccountsToTransactions = new HashMap<EthereumAccount, EthereumTx>();
     private int thisID;
+    private int nodesInShard;
+    private PBFTShardedNetwork network;
 
     public ClientLedCrossShardConsensus(PBFTShardedNode node) {
         this.node = node;
+        this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
+        this.network = (PBFTShardedNetwork) node.getNetwork();
     }
 
     public void setID(int ID){
@@ -71,7 +78,16 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             if (lockedAccounts.contains(account)) {
                 // if the account is locked, send a prepareNOTOK message back to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "prepareNOTOK");
-                node.sendMessageToNode(message, from);
+                // IF THIS IS NODE 0, TELL ALL SHARD NODES TO SEND PREPARENOTOK
+                // TODO
+                // node.sendMessageToNode(message, from);
+                if(thisID == 0){
+                    ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                    // FORCE MESSAGE
+                    for (PBFTShardedNode node : nodes) {
+                        node.sendMessageToNode(message, from);
+                    }
+                }
                 return;
             }
         }
@@ -79,10 +95,22 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         for (EthereumAccount account : accountsInThisShard) {
             lockedAccounts.add(account);
             lockedAccountsToTransactions.put(account, tx);
+            // account locking event
+            AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account);
+            this.node.getSimulator().putEvent(event, 0);
         }
         // send prepareOK message back to the client node
         CoordinationMessage message = new CoordinationMessage(tx, "prepareOK");
-        node.sendMessageToNode(message, from);
+        // IF THIS IS NODE 0 TELL ALL SHARD NODES TO SEND PREPAREOK
+        // TODO
+        // node.sendMessageToNode(message, from);
+        if(thisID == 0){
+            ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+            // FORCE MESSAGE
+            for (PBFTShardedNode node : nodes) {
+                node.sendMessageToNode(message, from);
+            }
+        }
         // System.out.println("Sending prepareOK message back to client node");
         // add the transaction to the prepared transactions list
         preparedTransactions.add(tx);
@@ -106,6 +134,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         for (EthereumAccount account : accountsInThisShard) {
             if (lockedAccountsToTransactions.get(account) == tx) {
                 lockedAccounts.remove(account);
+                // account unlocking event
+                AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                this.node.getSimulator().putEvent(event, 0);
                 lockedAccountsToTransactions.remove(account);
             }
         }
@@ -124,11 +155,21 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                 // unlock the accounts
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
+                    // account unlocking event
+                    AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                    this.node.getSimulator().putEvent(event, 0);
                     // System.out.println("Unlocking account " + account);
                 }
                 // send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");
-                node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
+                // NODE 0 TELL ALL NODES WHAT TO DO
+                if(thisID == 0){
+                    ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                    // FORCE MESSAGE
+                    for (PBFTShardedNode node : nodes) {
+                        node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
+                    }
+                }
             }
         }
     }
