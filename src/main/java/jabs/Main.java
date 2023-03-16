@@ -25,14 +25,15 @@ public class Main {
         // generate a random number between 1 and 1000000
         // int randomNum = 1 + (int)(Math.random() * 1000000);
         int randomNum = 1;
-        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 2, 10, 1, 1, 3600);
+        scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 2, 20, 3, 1, 3600);
         // scenario.AddNewLogger(new VoteLogger(Paths.get("output/sharded-pbft-block-delivery-log.csv")));
         // scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/sharded-pbft-coordination-messages-log.csv")));
         // scenario.AddNewLogger(new ShardedBlockConfirmationLogger(Paths.get("output/sharded-pbft-block-log.csv")));
-        // scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/TxCommittedLog14.csv")));
-        // files 5 - 14 are for client-led
-        scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/accountLockingLog.csv")));
-        scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/accountUnlockingLog.csv")));
+        // scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/transactionCommittedLog-shard-led-8-shards.csv")));
+        // scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/transactionCreationLog-shard-led-8-shards.csv")));
+        // // files 5 - 14 are for client-led
+        // scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/accountLockingLog-shardled-8shards.csv")));
+        // scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/accountUnlockingLog-shardled-8shards.csv")));
         scenario.run();
 
         // double scale = 1000;

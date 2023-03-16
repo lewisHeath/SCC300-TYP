@@ -43,11 +43,11 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
         // check if the transaction is in the prepared list
         if(this.preparedTxs.contains(tx)){
             if(type.equals("committed")){
-                System.out.println("Node " + this.node.getNodeID() + " received a commit message for tx " + tx + " from node " + from.getNodeID());
+                // System.out.println("Node " + this.node.getNodeID() + " received a commit message for tx " + tx + " from node " + from.getNodeID());
                 // increment vote for commit
                 this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
                 // check if each shards vote is above f + 1
-                if(this.txToCommits.get(tx).values().stream().allMatch(x -> x > 2 * ((PBFTShardedNetwork) this.network).getF())){
+                if(this.txToCommits.get(tx).values().stream().allMatch(x -> x > ((PBFTShardedNetwork) this.network).getF())){
                     // the transaction is committed
                     ((PBFTShardedNetwork) this.network).committedTransactions++;
                     // remove the tx from the data structures (and maybe to a list of committed txs)
@@ -59,7 +59,7 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                 // increment vote for abort
                 this.txToAborts.get(tx).put(shard, this.txToAborts.get(tx).get(shard) + 1);
                 // if ANY shards votes are above 2f
-                if(this.txToAborts.get(tx).values().stream().anyMatch(x -> x > 2 * ((PBFTShardedNetwork) this.network).getF())){
+                if(this.txToAborts.get(tx).values().stream().anyMatch(x -> x > ((PBFTShardedNetwork) this.network).getF())){
                     // the tx is aborted, add to queue of txs to try again maybe and remove from data structure
                     this.preparedTxs.remove(tx);
                     // System.out.println("Transaction " + tx + " was aborted");

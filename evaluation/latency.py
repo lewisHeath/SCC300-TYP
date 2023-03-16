@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # import the data
-df = pd.read_csv('../output/TxCommittedLog4.csv')
+df = pd.read_csv('../output/transactionCommittedLog-shard-led-8-shards.csv')
 
 # Time, Tx Hash, Time Tx Created
 # Latency = Time - Time Tx Created 
