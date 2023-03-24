@@ -2,6 +2,7 @@ package jabs.scenario;
 
 import jabs.log.AbstractLogger;
 import jabs.network.networks.Network;
+import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.simulator.event.Event;
 import jabs.simulator.randengine.RandomnessEngine;
 import jabs.simulator.Simulator;
@@ -99,7 +100,7 @@ public abstract class AbstractScenario {
      * @throws IOException
      */
     public void run() throws IOException {
-        System.err.printf("Staring %s...\n", this.name);
+        System.err.printf("Starting %s...\n", this.name);
         this.createNetwork();
         this.insertInitialEvents();
 
@@ -123,9 +124,9 @@ public abstract class AbstractScenario {
                 double simulationTime = this.simulator.getSimulationTime();
                 System.err.printf(
                         "Simulation in progress... " +
-                                "Elapsed Real Time: %d:%02d:%02d, Elapsed Simulation Time: %d:%02d:%02d\n",
+                                "Elapsed Real Time: %d:%02d:%02d, Elapsed Simulation Time: %d:%02d:%02d, Simulation time raw: %d\n",
                         (long)(realTime / 3600), (long)((realTime % 3600) / 60), (long)(realTime % 60),
-                        (long)(simulationTime / 3600), (long)((simulationTime % 3600) / 60), (long)(simulationTime % 60)
+                        (long)(simulationTime / 3600), (long)((simulationTime % 3600) / 60), (long)(simulationTime % 60), (long)simulationTime
                 );
                 lastProgressMessageTime = System.nanoTime();
             }
@@ -133,6 +134,19 @@ public abstract class AbstractScenario {
         for (AbstractLogger logger:this.loggers) {
             logger.finalLog();
         }
+
+        // System.out.println("Intra shard transactions: " + ((PBFTShardedNetwork)this.network).intraShardTransactions);
+        // System.out.println("Cross shard transactions: " + ((PBFTShardedNetwork)this.network).crossShardTransactions);
+
+        System.out.println("intra shard transactions generated: " + ((PBFTShardedNetwork)this.network).clientIntraShardTransactions);
+        System.out.println("cross shard transactions generated: " + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions);
+        int total = ((PBFTShardedNetwork)this.network).clientIntraShardTransactions + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions;
+        System.out.println("total transactions generated: " + total);
+
+        // System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
+        System.out.println("Committed transactions: " + ((PBFTShardedNetwork)this.network).committedTransactions);
+
+        System.out.println("For testing purposes, only cross shard txs are sent to the network");
 
         System.err.printf("Finished %s.\n", this.name);
     }

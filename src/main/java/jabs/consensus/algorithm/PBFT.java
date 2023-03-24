@@ -2,11 +2,18 @@ package jabs.consensus.algorithm;
 
 import jabs.consensus.blockchain.LocalBlockTree;
 import jabs.ledgerdata.*;
+import jabs.ledgerdata.Sharding.Recipt;
+import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.ledgerdata.pbft.*;
 import jabs.network.message.VoteMessage;
+import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTNode;
+import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.BlockConfirmationEvent;
+import jabs.simulator.event.ShardedBlockConfirmationEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -74,6 +81,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                         this.localBlockTree.add(block);
                     }
                     if (this.localBlockTree.getLocalBlock(block).isConnectedToGenesis) {
+                        // System.out.println("block connected to genesis");
                         this.pbftPhase = PBFTPhase.PREPARING;
                         this.peerBlockchainNode.broadcastMessage(
                                 new VoteMessage(
@@ -81,6 +89,7 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                                 )
                         );
                     }
+                    // else request the missing blocks? (this would happen after shard shuffle)
                     break;
                 case PREPARE:
                     checkVotes(blockVote, block, prepareVotes, preparedBlocks, PBFTPhase.COMMITTING);
@@ -98,27 +107,37 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
                 votes.put(block, new HashMap<>());
             }
             votes.get(block).put(vote.getVoter(), vote);
-            if (votes.get(block).size() > (((numAllParticipants / 3) * 2) + 1)) {
+            if (votes.get(block).size() > (((numAllParticipants / 3) * 2) + 1)) { // if over 2 thirds voted in favour
                 blocks.add(block);
                 this.pbftPhase = nextStep;
-                switch (nextStep) {
-                    case PRE_PREPARING:
+                switch (nextStep) { // depending on what the next step is do different things
+                    case PRE_PREPARING: // if THIS stage is commit
                         this.currentViewNumber += 1;
                         this.currentMainChainHead = block;
                         updateChain();
-                        if (this.peerBlockchainNode.nodeID == this.getCurrentPrimaryNumber()){
+                        // TODO: handle the cross shard transactions in the newest block in the chain
+                        // handleCrossShardTransactions();
+                        // System.out.println("checking if i can make a new block");
+                        // get the shard that this node is in
+                        int ID = this.peerBlockchainNode.nodeID;
+                        if(this.peerBlockchainNode instanceof PBFTShardedNode) {
+                            PBFTShardedNode pbftShardedNode = (PBFTShardedNode) this.peerBlockchainNode;
+                            int shardNumber = pbftShardedNode.getShardNumber();
+                            ID = ((PBFTShardedNetwork) pbftShardedNode.getNetwork()).getIndexOfNode(pbftShardedNode, shardNumber);
+                            // pass the block to the cross shard consensus protocol to handle committed messages and remove the transactions from the mempool
+                            pbftShardedNode.processConfirmedBlock((PBFTBlock) block);
+                        }
+                        if (ID == this.getCurrentPrimaryNumber()){ // IF IT IS THIS NODES TIME TO MAKE A BLOCK, MAKE ONE
+                            // System.out.println("Node ID: " + this.peerBlockchainNode.nodeID + " making a block");
                             this.peerBlockchainNode.broadcastMessage(
                                     new VoteMessage(
-                                            new PBFTPrePrepareVote<>(this.peerBlockchainNode,
-                                                    BlockFactory.samplePBFTBlock(peerBlockchainNode.getSimulator(),
-                                                            peerBlockchainNode.getNetwork().getRandom(),
-                                                            (PBFTNode) this.peerBlockchainNode, (PBFTBlock) block)
+                                            new PBFTPrePrepareVote<>(this.peerBlockchainNode, ((PBFTShardedNode)this.peerBlockchainNode).createBlock()
                                             )
                                     )
                             );
                         }
                         break;
-                    case COMMITTING:
+                    case COMMITTING: // if THIS stage is prepare
                         this.peerBlockchainNode.broadcastMessage(
                                 new VoteMessage(
                                         new PBFTCommitVote<>(this.peerBlockchainNode, block)
@@ -132,7 +151,6 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
 
     @Override
     public void newIncomingBlock(B block) {
-
     }
 
     /**
@@ -172,5 +190,17 @@ public class PBFT<B extends SingleParentBlock<B>, T extends Tx<T>> extends Abstr
     @Override
     protected void updateChain() {
         this.confirmedBlocks.add(this.currentMainChainHead);
+        // create block confirmation event
+        ShardedBlockConfirmationEvent blockConfirmationEvent = new ShardedBlockConfirmationEvent(this.peerBlockchainNode.getSimulator().getSimulationTime(), this.peerBlockchainNode, this.currentMainChainHead);
+        this.peerBlockchainNode.getSimulator().putEvent(blockConfirmationEvent, 0);
+    }
+
+    private void handleCrossShardTransactions() {
+        // get the latest block in the chain as a PBFTBlock
+        PBFTBlock block = (PBFTBlock) this.currentMainChainHead;
+        // get the transactions from that block
+        ArrayList<Recipt> transactions = block.getRecipts();
+        // pass this to the handle cross shard transactions method in node
+        ((PBFTShardedNode)this.peerBlockchainNode).handleCrossShardTransactions(transactions);
     }
 }

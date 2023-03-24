@@ -13,7 +13,7 @@ public abstract class AbstractCSVLogger extends AbstractLogger {
 
     @Override
     public void initialLog() {
-        loggerCSV.writeComment(this.csvStartingComment());
+        // loggerCSV.writeComment(this.csvStartingComment());
         loggerCSV.writeRow(this.csvHeaderOutput());
     }
 

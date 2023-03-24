@@ -3,8 +3,10 @@ package jabs.network.node.nodes;
 import jabs.consensus.algorithm.AbstractChainBasedConsensus;
 import jabs.consensus.blockchain.LocalBlockTree;
 import jabs.ledgerdata.*;
+import jabs.ledgerdata.Sharding.Recipt;
 import jabs.network.message.*;
 import jabs.network.networks.Network;
+import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.p2p.AbstractP2PConnections;
 import jabs.simulator.Simulator;
 
@@ -32,7 +34,10 @@ public abstract class PeerBlockchainNode<B extends SingleParentBlock<B>, T exten
     @Override
     public void processIncomingPacket(Packet packet) {
         Message message = packet.getMessage();
-        if (message instanceof DataMessage) {
+        if (message instanceof CoordinationMessage) {
+            // System.out.println("CoordinationMessage");
+            ((PBFTShardedNode) this).processCoordinationMessage((CoordinationMessage) message, packet.getFrom());
+        } else if (message instanceof DataMessage) {
             Data data = ((DataMessage) message).getData();
             if (data instanceof Block) {
                 B block = (B) data;
@@ -59,6 +64,9 @@ public abstract class PeerBlockchainNode<B extends SingleParentBlock<B>, T exten
                     alreadySeenTxs.put(tx.getHash(), tx);
                     this.processNewTx(tx, packet.getFrom());
                 }
+            } else if (data instanceof Recipt){
+                Recipt recipt = (Recipt) data;
+                ((PBFTShardedNode) this).processNewRecipt(recipt, packet.getFrom());
             }
         } else if (message instanceof InvMessage) {
             Hash hash = ((InvMessage) message).getHash();
