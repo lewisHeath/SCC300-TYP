@@ -1,17 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# import the data
-# df = pd.read_csv('../output/sharded-pbft-coordination-messages-log.csv')
-# # count the different MessageTypes
-# df = df.groupby(['MessageType']).count()
-# # plot the data
-# df.plot(kind='bar')
-# # make the x axis labels horizontal
-# plt.xticks(rotation=0)
-# plt.show()
-
-# shard_block_count = ndf['BlockCreator']
 
 df = pd.read_csv('../output/sharded-pbft-block-log.csv')
 # this data contains the event from where a block was added to a chain, it has the node id that is emitting the event and the block creator and shard number
