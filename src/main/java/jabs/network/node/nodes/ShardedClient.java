@@ -19,6 +19,8 @@ import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.p2p.ShardedClientP2P;
 import jabs.simulator.Simulator;
+import jabs.simulator.event.TransactionCommittedEvent;
+import jabs.simulator.event.TransactionCreationEvent;
 import jabs.simulator.event.TxGenerationProcessSingleNode;
 
 public class ShardedClient extends Node{
@@ -77,6 +79,10 @@ public class ShardedClient extends Node{
                     this.intraShardTxCommitCount.remove(data);
                     // increment the number of committed txs
                     ((PBFTShardedNetwork) this.network).committedTransactions++;
+                    // generate transaction committed event
+                    TransactionCommittedEvent txCommittedEvent = new TransactionCommittedEvent(this.simulator.getSimulationTime(), data);
+                    this.simulator.putEvent(txCommittedEvent, 0);
+                    // System.out.println("Committed");
                 }
             }
         }
@@ -84,14 +90,16 @@ public class ShardedClient extends Node{
 
     @Override
     public void generateNewTransaction() {
+        // generate a new transaction
         EthereumTx tx = TransactionFactory.sampleEthereumTransaction(network.getRandom());
+        tx.setCreationTime(this.simulator.getSimulationTime());
+
+        System.out.println("Client generated new transaction: " + tx);
         // somehow decide how many shards/accounts should be involved in the transaction TODO
-        // for now, i will randomly select between 2 and 10 accounts
-        int numAccounts = network.getRandom().nextInt(3) + 2;
-        // EthereumAccount sender = ((PBFTShardedNetwork) network).getRandomAccount();
-        // EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccount();
-        // tx.setSender(sender);
-        // tx.setReceiver(receiver);
+        // for now, i will randomly select between 2 and 5 accounts
+        // int numAccounts = network.getRandom().nextInt(3) + 2;
+        int numAccounts = 2;
+
 
         ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
         for (int i = 0; i < numAccounts; i++) {
@@ -116,12 +124,33 @@ public class ShardedClient extends Node{
         }
 
         if (crossShard) {
+
+            // print the shards involved in the transaction
+            System.out.println("Sender shard: " + senderShard);
+            System.out.println("Receiver shards: ");
+            for (int i = 0; i < tx.getReceivers().size(); i++) {
+                System.out.println(((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceivers().get(i)));
+            }
+            // print the involved accounts
+            System.out.println("Involved accounts: ");
+            for (EthereumAccount tempAccount : tx.getAllInvolvedAccounts()){
+                System.out.println(tempAccount);
+            }
+
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
-            this.sendCrossShardTransaction(tx);
+            tx.setCrossShard(true);
+            // create transaction creation event
+            TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx);
+            this.simulator.putEvent(event, 0);
+            // this.sendCrossShardTransaction(tx);
         } else {
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);
-            this.sendTransaction(tx, senderShard);
+            tx.setCrossShard(false);
+            // create transaction creation event
+            TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx);
+            this.simulator.putEvent(event, 0);
+            // this.sendTransaction(tx, senderShard);
         }
     }
 
@@ -131,12 +160,14 @@ public class ShardedClient extends Node{
     }
 
     public void stopTxGenerationProcess() {
-        this.simulator.removeEvent(this.txGenerationProcess);
+        // this.simulator.removeEvent(this.txGenerationProcess);
     }
 
     private void sendTransaction(EthereumTx tx, int shard) {
         // send to at least f + 1 nodes in the shard
         // int f = ((PBFTShardedNetwork) this.network).getF();
+        tx.setCreationTime(this.simulator.getSimulationTime());
+
         ArrayList<PBFTShardedNode> nodes = ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shard);
         for(Node node : nodes){
             this.networkInterface.addToUpLinkQueue(

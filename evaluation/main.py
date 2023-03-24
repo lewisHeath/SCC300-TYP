@@ -1,30 +1,24 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# import the data
-# df = pd.read_csv('../output/sharded-pbft-coordination-messages-log.csv')
-# # count the different MessageTypes
-# df = df.groupby(['MessageType']).count()
-# # plot the data
-# df.plot(kind='bar')
-# # make the x axis labels horizontal
-# plt.xticks(rotation=0)
-# plt.show()
-
-# import ../output/sharded-pbft-block-log.csv
-ndf = pd.read_csv('../output/sharded-pbft-block-log.csv')
-# only keep data which NodeID is the same as BlockCreator
-ndf = ndf[ndf['NodeID'] == ndf['BlockCreator']]
-# separate the data by the shard column
-ndf = ndf.groupby(['Shard']).count()
-
-# shard_block_count = ndf['BlockCreator']
 
 df = pd.read_csv('../output/sharded-pbft-block-log.csv')
 # this data contains the event from where a block was added to a chain, it has the node id that is emitting the event and the block creator and shard number
 # we only want the data where the node id is the same as the block creator
 df = df[df['NodeID'] == df['BlockCreator']]
 # i want to plot a line graph where the x axis is the Time and the y axis is the block height, i want to separate the data by the shard number and have a different line for each shard,  i want to plot the data for each shard in a different color
+
+
+# get the average transactions in each block, the Feild is called TransactionsInBlock
+transactions_in_block = df['TransactionsInBlock'].mean()
+print('Average Transactions in Block: ', transactions_in_block)
+# get the amount of blocks
+block_count = df['BlockCreator'].count()
+print('Block Count: ', block_count)
+# get the average time between blocks
+average_time_between_blocks = df['Time'].diff().mean()
+print('Average Time Between Blocks: ', average_time_between_blocks)
+
 
 # separate the data by the shard column
 df = df.groupby(['Shard'])

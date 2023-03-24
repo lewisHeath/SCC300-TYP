@@ -3,6 +3,9 @@ package jabs.network.networks.sharded;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.apache.commons.math3.distribution.BetaDistribution;
+import org.apache.commons.math3.distribution.ParetoDistribution;
+
 import jabs.consensus.config.ConsensusAlgorithmConfig;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
@@ -18,7 +21,10 @@ import jabs.network.stats.eightysixcountries.ethereum.EthereumNodeGlobalNetworkS
 import jabs.simulator.Simulator;
 import jabs.simulator.randengine.RandomnessEngine;
 
-public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
+import jabs.network.stats.lan.LAN100MNetworkStats;
+import jabs.network.stats.lan.SingleNodeType;
+
+public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
 
     private int numberOfShards;
     private int nodesPerShard;
@@ -36,9 +42,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int failures = 0;
     public int committedTransactions = 0;
     public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
+    EightySixCountries region;
     
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs) {
-        super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
+        super(randomnessEngine, new LAN100MNetworkStats(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
         this.numberOfClients = numberOfClients;
@@ -46,25 +53,26 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.accountToShard = new HashMap<EthereumAccount, Integer>();
         this.clients = new ArrayList<ShardedClient>();
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
+        this.region = nodeDistribution.sampleRegion();
         // add accounts
         this.generateAccounts(1000);
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
-        EightySixCountries region = nodeDistribution.sampleRegion();
+        // EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of node " + nodeID + " is " + region);
         return new PBFTShardedNode(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(region),
-                this.sampleUploadBandwidth(region),
+                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE),
+                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
                 numNodesInShard, shardNumber);
     }
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
-        EightySixCountries region = nodeDistribution.sampleRegion();
+        // EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of client " + nodeID + " is " + region);
         return new ShardedClient(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(region), 
-                this.sampleUploadBandwidth(region),
+                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE), 
+                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
                 this.timeBetweenTxs);
     }
 
@@ -117,6 +125,13 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
                 shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
             }
         }
+
+        // tell each nodes cross shard consensus protocol what their ID is
+        for (int i = 0; i < numberOfShards; i++) {
+            for (int j = 0; j < shards.get(i).size(); j++) {
+                shards.get(i).get(j).getCrossShardConsensus().setID(j);
+            }
+        }
     }
 
     /**
@@ -125,7 +140,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     @Override
     public void addNode(Node node) {
         EightySixCountries region = nodeDistribution.sampleRegion();
-        this.addNode(node, region);
+        this.addNode(node, SingleNodeType.LAN_NODE);
     }
 
     public ArrayList<PBFTShardedNode> getShard(int shardNumber){
@@ -168,8 +183,14 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public EthereumAccount getRandomAccount() {
         // get a random account from the network
-        int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
-        return (EthereumAccount) accountToShard.keySet().toArray()[randomAccountIndex];
+
+        // BetaDistribution betaDistribution = new BetaDistribution(0.5, 5);
+        // int randomInt = (int) Math.round(betaDistribution.sample() * accountToShard.size());
+        // System.out.println("randInt: " + randomInt);
+        int randomInt = this.randomnessEngine.nextInt(this.accountToShard.size());
+
+        // int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
+        return (EthereumAccount) accountToShard.keySet().toArray()[randomInt];
     }
 
     public EthereumAccount getRandomAccountFromShard(int shardNumber) {
@@ -187,6 +208,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // get a random node from the shard
         int randomNodeIndex = this.getRandom().nextInt(shards.get(shardNumber).size());
         return shards.get(shardNumber).get(randomNodeIndex);
+    }
+
+    public PBFTShardedNode getNodeInShard(int shardNumber, int node){
+        return shards.get(shardNumber).get(node);
     }
 
     public ArrayList<ShardedClient> getClients() {
@@ -228,10 +253,14 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public int getF() {
         // get the size of one of the shards and return a third of it
-        return (int) Math.ceil((double) this.shards.get(0).size() / 3);
+        return (int) Math.floor((double) this.shards.get(0).size() / 3);
     }
 
     public int getNumberOfShards() {
         return this.numberOfShards;
+    }
+
+    public int getNodesPerShard() {
+        return this.nodesPerShard;
     }
 }

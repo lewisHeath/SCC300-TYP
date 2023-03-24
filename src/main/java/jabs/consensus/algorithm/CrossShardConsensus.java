@@ -18,4 +18,6 @@ public interface CrossShardConsensus {
     public Boolean isLocked(EthereumAccount account);
 
     public Boolean areAllAccountsInThisShard(ArrayList<EthereumAccount> accounts);
+
+    public void setID(int ID);
 }

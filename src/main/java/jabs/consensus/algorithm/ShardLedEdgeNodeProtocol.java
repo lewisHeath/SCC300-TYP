@@ -11,6 +11,7 @@ import jabs.network.networks.Network;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.TransactionCommittedEvent;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 
 public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
@@ -42,6 +43,7 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
         // check if the transaction is in the prepared list
         if(this.preparedTxs.contains(tx)){
             if(type.equals("committed")){
+                // System.out.println("Node " + this.node.getNodeID() + " received a commit message for tx " + tx + " from node " + from.getNodeID());
                 // increment vote for commit
                 this.txToCommits.get(tx).put(shard, this.txToCommits.get(tx).get(shard) + 1);
                 // check if each shards vote is above f + 1
@@ -50,6 +52,8 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                     ((PBFTShardedNetwork) this.network).committedTransactions++;
                     // remove the tx from the data structures (and maybe to a list of committed txs)
                     this.preparedTxs.remove(tx);
+                    TransactionCommittedEvent txCommittedEvent = new TransactionCommittedEvent(this.node.getSimulator().getSimulationTime(), tx);
+                    this.node.getSimulator().putEvent(txCommittedEvent, 0);
                 }
             } else if(type.equals("aborted")) {
                 // increment vote for abort
@@ -76,40 +80,24 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
         // get the shards from the transaction
         ArrayList<Integer> shards = new ArrayList<Integer>();
         shards.addAll(tx.getAllInvolvedShards());
-        Boolean crossShard = false;
-        if(shards.size() > 1) {
-            crossShard = true;
-        }
         // this will be modified to support more than 2 shards
-        if(crossShard) {
-            // create pre-prepare message
-            CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare", this.node);
-            // initialise the data structures
-            this.txToCommits.put(tx, new HashMap<Integer, Integer>());
-            this.txToAborts.put(tx, new HashMap<Integer, Integer>());
-            // add the shards to the data structures
-            for(Integer shard : shards) {
-                this.txToCommits.get(tx).put(shard, 0);
-                this.txToAborts.get(tx).put(shard, 0);
-            }
-            // send the message to the shards
-            for(Integer shard : shards) {
-                for (Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shard)) {
-                    node.getNodeNetworkInterface().addToUpLinkQueue(
-                            new Packet(
-                                    node, n, message));
-                }
-            }
-        } else {
-            // send the transaction normally to the shard
-            DataMessage message = new DataMessage(tx);
-            // send to all nodes in senderShard
-            for(Node n : ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shards.get(0))) {
-                node.getNodeNetworkInterface().addToUpLinkQueue(
-                        new Packet(
-                                node, n, message));
-            }
+        // create pre-prepare message
+        CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare", this.node);
+        // initialise the data structures
+        this.txToCommits.put(tx, new HashMap<Integer, Integer>());
+        this.txToAborts.put(tx, new HashMap<Integer, Integer>());
+        // add the shards to the data structures
+        for(Integer shard : shards) {
+            this.txToCommits.get(tx).put(shard, 0);
+            this.txToAborts.get(tx).put(shard, 0);
+        }
+        // send the message to the shards
+        for(Integer shard : shards) {
+            // send to one node in each shard
+            Node nodeToSendTo = ((PBFTShardedNetwork)this.network).getNodeInShard(shard, 0);
+            this.node.getNodeNetworkInterface().addToUpLinkQueue(
+                new Packet(this.node, nodeToSendTo, message)
+            );
         }
     }
-    
 }

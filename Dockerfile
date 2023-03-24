@@ -10,4 +10,10 @@ RUN groupadd -g ${gid} ${group} && useradd -u ${uid} -g ${gid} ${user}
 WORKDIR /app
 
 COPY pom.xml ./
-RUN mvn verify --fail-never
+RUN mvn package
+
+# Copy the rest of the application code into the container
+COPY src/main/java/jabs ./src
+
+CMD ["sh"]
+
