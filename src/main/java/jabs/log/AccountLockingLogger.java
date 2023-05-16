@@ -35,18 +35,20 @@ public class AccountLockingLogger extends AbstractCSVLogger {
 
     @Override
     protected String[] csvHeaderOutput() {
-        return new String[] { "Time", "Account" };
+        return new String[] { "Time", "Account", "Node" };
     }
 
     @Override
     protected String[] csvEventOutput(Event event) {
         AccountLockingEvent lockingEvent = (AccountLockingEvent)event;
         EthereumAccount account = lockingEvent.getAccount();
+        int nodeID = lockingEvent.getNodeThatLocked().getNodeID();
 
         // Time, Account
         return new String[] {
                 Double.toString(this.scenario.getSimulator().getSimulationTime()),
-                account.toString()
+                account.toString(),
+                Integer.toString(nodeID)
         };
     }
     

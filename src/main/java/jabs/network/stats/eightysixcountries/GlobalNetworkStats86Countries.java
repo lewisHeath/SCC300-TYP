@@ -138,17 +138,32 @@ public class GlobalNetworkStats86Countries implements NetworkStats<EightySixCoun
         double mean = GLOBAL_LATENCY_BY_REGION[fromPosition.getValue()][toPosition.getValue()];
         double scale = ((LATENCY_PARETO_SHAPE-1)/LATENCY_PARETO_SHAPE) * mean;
         return randomnessEngine.sampleParetoDistribution(scale, LATENCY_PARETO_SHAPE)/1000;
+        // return 0.1;
     }
 
     @Override
     public long sampleDownloadBandwidth(EightySixCountries region) {
-        return (long) randomnessEngine.sampleLogNormalDistribution(DOWNLOAD_BANDWIDTH_AVERAGE[region.getValue()],
-                DOWNLOAD_BANDWIDTH_SHAPE)*1000000;
+        // return (long) randomnessEngine.sampleLogNormalDistribution(DOWNLOAD_BANDWIDTH_AVERAGE[region.getValue()],
+        //         DOWNLOAD_BANDWIDTH_SHAPE)*1000000;
+        long bandwidth = (long) randomnessEngine.sampleLogNormalDistribution(DOWNLOAD_BANDWIDTH_AVERAGE[region.getValue()],DOWNLOAD_BANDWIDTH_SHAPE)*1000000;
+        System.out.println("sampleDownloadBandwidth: " + bandwidth);
+        // if(bandwidth < 5000000){
+        //     return 10000000;
+        // }
+        return bandwidth;
+        // return 20000000;
     }
 
     @Override
     public long sampleUploadBandwidth(EightySixCountries region) {
-        return (long) randomnessEngine.sampleLogNormalDistribution(UPLOAD_BANDWIDTH_AVERAGE[region.getValue()],
-                UPLOAD_BANDWIDTH_SHAPE)*1000000;
+        // return (long) randomnessEngine.sampleLogNormalDistribution(UPLOAD_BANDWIDTH_AVERAGE[region.getValue()],
+        //         UPLOAD_BANDWIDTH_SHAPE)*1000000;
+        long bandwidth = (long) randomnessEngine.sampleLogNormalDistribution(DOWNLOAD_BANDWIDTH_AVERAGE[region.getValue()],DOWNLOAD_BANDWIDTH_SHAPE)*1000000;
+        System.out.println("sampleUploadBandwidth: " + bandwidth);
+        // if(bandwidth < 5000000){
+        //     return 10000000;
+        // }
+        return bandwidth;
+        // return 10000000;
     }
 }

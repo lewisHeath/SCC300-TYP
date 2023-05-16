@@ -58,7 +58,7 @@ public class CoordinationMessagesLogger extends AbstractCSVLogger {
 
     @Override
     protected String[] csvHeaderOutput() {
-        return new String[] { "Time", "MessageType", "Sender", "Receiver", "Tx ID" };
+        return new String[] { "Time", "MessageType", "Sender", "Receiver", "Tx ID", "Size" };
     }
 
     @Override
@@ -72,7 +72,8 @@ public class CoordinationMessagesLogger extends AbstractCSVLogger {
                 message.getType(),
                 Integer.toString(packet.getFrom().nodeID),
                 Integer.toString(packet.getTo().nodeID),
-                Integer.toString(tx.hashCode())
+                Integer.toString(tx.hashCode()),
+                Integer.toString(message.getSize())
         };
     }
 }

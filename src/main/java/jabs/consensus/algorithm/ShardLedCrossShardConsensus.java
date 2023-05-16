@@ -116,22 +116,28 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         }
 
         // if this node is the leader and it hasnt yet sent a pre-prepare to the rest of the shard, send it
-        if (thisID == 0 && sentFromClient) {
-            // broadcast the tx to all nodes in this shard
-            // System.out.println("Node " + node.getNodeID() + " is the leader and is sending a pre-prepare message for tx " + tx);
-            CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare", clientFrom);
-            node.broadcastMessage(message);
-            sentPrePrepare = true;
-            this.phase = PHASE.PREPARING;
-            // System.out.println("Sent pre-prepare in the function at view " + this.viewNumber + ", Node ID: " + node.getNodeID() + " for tx: " + tx);
-            return;
-        }
+        // if (thisID == 0 && sentFromClient) {
+        //     // broadcast the tx to all nodes in this shard
+        //     // System.out.println("Node " + node.getNodeID() + " is the leader and is sending a pre-prepare message for tx " + tx);
+        //     CoordinationMessage message = new CoordinationMessage(tx, "pre-prepare", clientFrom);
+        //     node.broadcastMessage(message);
+        //     sentPrePrepare = true;
+        //     this.phase = PHASE.PREPARING;
+        //     // System.out.println("Sent pre-prepare in the function at view " + this.viewNumber + ", Node ID: " + node.getNodeID() + " for tx: " + tx);
+        //     return;
+        // }
 
         // if the message has not come from a client, it needs to be processed and then a prepareOK or prepareNOTOK sent
-        if (!sentFromClient && !prePrepareSent.contains(tx) && thisID == 0) {
+        // if (!sentFromClient && !prePrepareSent.contains(tx) && thisID == 0) {
+        if (thisID == 0) {
             // System.out.println("Received pre-prepare at view " + this.viewNumber);
             prePrepareSent.add(tx);
             System.out.println("processing tx: " + tx + " in shard " + node.getShardNumber());
+            // if this has already been aborted before even seeing it in a pre-prepare, do not process it
+            if (txToAborts.get(tx).values().stream().anyMatch(x -> x > ((PBFTShardedNetwork) node.getNetwork()).getF())){
+                System.out.println("already aborted: " + tx);
+                return;
+            }
             // check if the accounts are locked
             if (areAccountsLocked(accountsInThisShard)) {
                 // send prepareNOTOK
@@ -149,7 +155,11 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 // }
                 // System.out.println("Accounts are locked");
 
+                // tell each shard that the account 
+
                 this.sendCommitOrAbort("abort", tx);
+                // print how many locked accounts there are 
+                System.out.println("Locked accounts: " + lockedAccounts.size() + " in shard " + node.getShardNumber() + " for tx " + tx);
 
                 return;
             }
@@ -159,14 +169,14 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 lockedAccounts.add(account);
                 lockedAccountsToTransactions.put(account, tx);
 
-                // little trick, tell the other shards that the 
+                // little trick, tell the other shards that the account was locked for this tx
 
 
 
 
                 // locking account event
                 System.out.println("Locking account" + account);
-                AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account, this.node);
                 this.node.getSimulator().putEvent(event, 0);
             }
             System.out.println("Locked accounts after: " + lockedAccounts.size() + " in shard " + node.getShardNumber() + " for tx " + tx);
@@ -283,10 +293,11 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 if(lockedAccountsToTransactions.get(account) != null && lockedAccountsToTransactions.get(account).equals(tx)){
                     // remove every duplicate account
                     while(lockedAccounts.contains(account)){
+                        System.out.println("Account: " + account + " unlocked" + " in the abort phase");
                         lockedAccounts.remove(account);
                     }
                     lockedAccountsToTransactions.remove(account);
-                    System.out.println("Account: " + account + " unlocked" + " in the abort phase");
+                    // System.out.println("Account: " + account + " unlocked" + " in the abort phase");
                 }
                 // lockedAccounts.remove(account);
                 // lockedAccountsToTransactions.remove(account);
@@ -317,7 +328,7 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
         // check if any of the no of commits is greater than f + 1
         if(txToCommits.get(tx).values().stream().allMatch(x -> x > ((PBFTShardedNetwork)node.getNetwork()).getF()) && secondPhaseTxs.contains(tx)){
             // add tx to mempool
-            node.broadcastTransactionToShard(tx, node.getShardNumber());
+            node.processNewTx(tx, from);
             // remove tx from second phase list
             secondPhaseTxs.remove(tx);
         }
@@ -332,13 +343,19 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
                 // this needs upgrading to handle smart contract transactions
                 accounts.addAll(tx.getAllInvolvedAccounts());
                 // unlock the accounts
+                if(thisID == 0) System.out.println("size of locked accounts before confirming transaction: " + lockedAccounts.size());
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
-                    System.out.println("Unlocking account " + account);
+                    while(lockedAccounts.contains(account)){
+                        lockedAccounts.remove(account);
+                        System.out.println("Unlocking account " + account);
+                    }
                     // Unlocking account event
-                    AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account);
+                    AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account, this.node);
                     this.node.getSimulator().putEvent(event, 0);
                 }
+                lockedAccounts.removeAll(accounts);
+                if(thisID == 0) System.out.println("size of locked accounts after confirming transaction: " + lockedAccounts.size());
                 // send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");
                 // System.out.println("Sending committed message to client node " + preparedTxsFrom.get(tx).getNodeID() + " for tx " + tx + " from node " + node.getNodeID());

@@ -24,7 +24,7 @@ import jabs.simulator.randengine.RandomnessEngine;
 import jabs.network.stats.lan.LAN100MNetworkStats;
 import jabs.network.stats.lan.SingleNodeType;
 
-public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
+public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     private int numberOfShards;
     private int nodesPerShard;
@@ -43,9 +43,12 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
     public int committedTransactions = 0;
     public NodeGlobalRegionDistribution<EightySixCountries> nodeDistribution;
     EightySixCountries region;
+    public HashMap<EthereumAccount, Integer> amountOfTimesUsed = new HashMap<EthereumAccount, Integer>();
+    private boolean clientLed;
+    private ArrayList<Double> cdf;
     
-    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs) {
-        super(randomnessEngine, new LAN100MNetworkStats(randomnessEngine));
+    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed) {
+        super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
         this.numberOfClients = numberOfClients;
@@ -55,25 +58,37 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         this.region = nodeDistribution.sampleRegion();
         // add accounts
-        this.generateAccounts(1000);
+        this.generateAccounts(1000000);
+        this.clientLed = clientLed;
+        this.generateCDF(1.2);
+    }
+
+    private void generateCDF(double exponent) {
+        cdf = new ArrayList<>();
+        int numAccounts = accountToShard.size();
+        double normalization = 0;
+
+        for (int i = 1; i <= numAccounts; i++) {
+            normalization += Math.pow(i, -exponent);
+        }
+
+        double cumulative = 0;
+        for (int i = 1; i <= numAccounts; i++) {
+            cumulative += Math.pow(i, -exponent) / normalization;
+            cdf.add(cumulative);
+        }
     }
 
     public PBFTShardedNode createNewPBFTShardedNode(Simulator simulator, int nodeID, int numNodesInShard, int shardNumber) {
-        // EightySixCountries region = nodeDistribution.sampleRegion();
+        EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of node " + nodeID + " is " + region);
-        return new PBFTShardedNode(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE),
-                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
-                numNodesInShard, shardNumber);
+        return new PBFTShardedNode(simulator, this, nodeID,this.sampleDownloadBandwidth(region),this.sampleUploadBandwidth(region),numNodesInShard, shardNumber, this.clientLed);
     }
 
     public ShardedClient createNewShardedClient(Simulator simulator, int nodeID)  {
-        // EightySixCountries region = nodeDistribution.sampleRegion();
+        EightySixCountries region = nodeDistribution.sampleRegion();
         // System.out.println("region of client " + nodeID + " is " + region);
-        return new ShardedClient(simulator, this, nodeID,
-                this.sampleDownloadBandwidth(SingleNodeType.LAN_NODE), 
-                this.sampleUploadBandwidth(SingleNodeType.LAN_NODE),
-                this.timeBetweenTxs);
+        return new ShardedClient(simulator, this, nodeID,this.sampleDownloadBandwidth(region), this.sampleUploadBandwidth(region),this.timeBetweenTxs, this.clientLed);
     }
 
     @Override
@@ -140,7 +155,7 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
     @Override
     public void addNode(Node node) {
         EightySixCountries region = nodeDistribution.sampleRegion();
-        this.addNode(node, SingleNodeType.LAN_NODE);
+        this.addNode(node, region);
     }
 
     public ArrayList<PBFTShardedNode> getShard(int shardNumber){
@@ -170,6 +185,9 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
             }
             this.shardToAccounts.get(shardNumber).add(account);
         }
+        for(int i = 0; i < this.shardToAccounts.size(); i++){
+            System.out.println("size of shard(" + i + ") in generateAccounts() method: " + this.shardToAccounts.get(i).size());
+        }
     }
 
     public void addAccount(EthereumAccount account, int shardNumber) {
@@ -181,12 +199,22 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
         return accountToShard.get(account);
     }
 
-    public EthereumAccount getRandomAccount() {
+    public EthereumAccount getRandomAccount(Boolean use_cdf) {
         // get a random account from the network
+        // Generate a random number between 0 and 1
+        double randomNumber = this.randomnessEngine.nextDouble();
 
-        // BetaDistribution betaDistribution = new BetaDistribution(0.5, 5);
-        // int randomInt = (int) Math.round(betaDistribution.sample() * accountToShard.size());
-        // System.out.println("randInt: " + randomInt);
+        // Find the corresponding value of the random number in the CDF
+        int index = 0;
+        for (int i = 0; i < cdf.size(); i++) {
+            if (randomNumber <= cdf.get(i)) {
+                index = i;
+                break;
+            }
+        }
+        if(use_cdf) {
+            return (EthereumAccount) accountToShard.keySet().toArray()[index];
+        }
         int randomInt = this.randomnessEngine.nextInt(this.accountToShard.size());
 
         // int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
@@ -237,7 +265,7 @@ public class PBFTShardedNetwork extends Network<Node, SingleNodeType> {
                 EthereumTx tx = TransactionFactory.sampleEthereumTransaction(this.getRandom());
                 // get 2 random accounts with the sender in the correct shard
                 EthereumAccount sender = getRandomAccountFromShard(i);
-                EthereumAccount receiver = getRandomAccount();
+                EthereumAccount receiver = getRandomAccount(false);
                 tx.setSender(sender);
                 tx.setReceiver(receiver);
                 // add the transaction to the mempool

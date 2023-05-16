@@ -10,10 +10,12 @@ import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
 import jabs.consensus.algorithm.CrossShardConsensus;
 import jabs.consensus.algorithm.PBFT;
 import jabs.consensus.algorithm.ShardLedCrossShardConsensus;
+import jabs.ledgerdata.BlockFactory;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.Vote;
 import jabs.ledgerdata.Sharding.Recipt;
 import jabs.ledgerdata.ethereum.EthereumAccount;
+import jabs.ledgerdata.ethereum.EthereumBlock;
 import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.ledgerdata.pbft.PBFTBlock;
 import jabs.network.message.CoordinationMessage;
@@ -23,9 +25,12 @@ import jabs.network.message.Packet;
 import jabs.network.networks.Network;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.PeerBlockchainNode;
+import jabs.network.node.nodes.ethereum.EthereumMinerNode;
 import jabs.network.node.nodes.Node;
 import jabs.network.p2p.ShardedPBFTP2P;
 import jabs.simulator.Simulator;
+import jabs.simulator.event.TransactionCommittedEvent;
+import jabs.simulator.randengine.RandomnessEngine;
 
 public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     public static final PBFTBlock PBFT_GENESIS_BLOCK = new PBFTBlock(0, 0, 0, null, null);
@@ -37,9 +42,10 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
     protected ArrayList<Recipt> recipts;
     protected HashMap<EthereumAccount, Boolean> lockedAccounts;
     protected ArrayList<EthereumAccount> shardAccounts;
+    static final long MAXIMUM_BLOCK_GAS = 12500000;
 
     public PBFTShardedNode(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth,
-            int nodesPerShard, int shardNumber) {
+            int nodesPerShard, int shardNumber, boolean clientLed) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth,
                 new ShardedPBFTP2P(),
                 new PBFT<>(new LocalBlockTree<>(PBFT_GENESIS_BLOCK), nodesPerShard));
@@ -51,7 +57,11 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         this.lockedAccounts = new HashMap<>();
         this.shardAccounts = new ArrayList<>();
         // this needs to be mofified to support shard led
-        this.crossShardConsensus = new ShardLedCrossShardConsensus(this);
+        if(clientLed) {
+            this.crossShardConsensus = new ClientLedCrossShardConsensus(this);
+        } else {
+            this.crossShardConsensus = new ShardLedCrossShardConsensus(this);
+        }
         // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " has been created");
     }
 
@@ -137,6 +147,8 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
                     this.broadcastMessageToNode(message, from);
                 } else {
                     // System.out.println("CRITICAL ERROR: from node is null");
+                    // TransactionCommittedEvent txCommittedEvent = new TransactionCommittedEvent(this.getSimulator().getSimulationTime(), tx);
+                    // this.getSimulator().putEvent(txCommittedEvent, 0);
                 }
             }
         }
@@ -163,7 +175,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             // get 2 random accounts from the network
             // make sure sender account is this shard
             EthereumAccount sender = ((PBFTShardedNetwork) this.network).getRandomAccountFromShard(this.shardNumber);
-            EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccount();
+            EthereumAccount receiver = ((PBFTShardedNetwork) network).getRandomAccountFromShard(this.shardNumber);
             tx.setSender(sender);
             tx.setReceiver(receiver);
             // this.txToSender.put(tx, ((PBFTShardedNetwork) network).getRandomClient());
@@ -180,19 +192,41 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         if(this.mempool.size() ==0){
             // System.out.println("Mempool is empty");
         }
+        int i = 0;
         // fill list of txs with txs from the mempool
-        while (gas < 10000000 && this.mempool.size() > 0) {
+        while (gas < MAXIMUM_BLOCK_GAS && this.mempool.size() > i) {
             // add top tx from mempool to transaction list
-            EthereumTx tx = this.mempool.get(0);
-            this.mempool.remove(0);
-            txs.add(tx);
-            gas += tx.getGas();
-            size += tx.getSize();
+            EthereumTx tx = this.mempool.get(i);
+            // get accounts from tx
+            ArrayList<EthereumAccount> accounts = new ArrayList<>();
+            accounts.addAll(tx.getAllInvolvedAccounts());
+            // if they are locked and its intra-shard
+            if(this.crossShardConsensus.areAllAccountsInThisShard(accounts)){
+                // if they are locked
+                if(!this.crossShardConsensus.areAccountsLocked(accounts)){
+                    this.mempool.remove(i);
+                    txs.add(tx);
+                    gas += tx.getGas();
+                    size += tx.getSize();
+                } else {
+                    i++;
+                    // this.mempool.remove(i);
+                    System.out.println("SAME SHARD AND LOCKED");
+                }
+            // if cross shard add anyway
+            } else {
+                this.mempool.remove(i);
+                txs.add(tx);
+                gas += tx.getGas();
+                size += tx.getSize();
+            }
         }
-        if(size == 0) size = 1000;
+        size = size + 1000; // this is for the metadata in the block
         // System.out.println("Node " + this.nodeID + " in shard: " + shardNumber + " creating block with size: " + size);
         // create a new block
-        PBFTBlock block = new PBFTBlock(size * 100, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
+
+        int newSize = BlockFactory.sampleBitcoinBlockSize(this.network.getRandom());
+        PBFTBlock block = new PBFTBlock(size, this.consensusAlgorithm.getCanonicalChainHead().getHeight() + 1, simulator.getSimulationTime(), this, this.consensusAlgorithm.getCanonicalChainHead());
         // add the transactions to the block
         block.setTransactions(txs);
         removeTransactionsFromMempool(block);
@@ -213,10 +247,6 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             // get the node in that shard
             // PBFTShardedNode node = ((PBFTShardedNetwork)network).getRandomNodeInShard(shardNumber);
             // System.out.println("Sending cross shard transaction to shard: " + shardNumber + " from shard: " + this.shardNumber);
-            /* 
-             * TODO: this is where the cross shard coordination happens, for now we just send the transaction to the other shard
-             * nodes need a function to reveive an array of a transaction and its corresponding recipt from the other shard
-             */
             // send the recipt to the shard
             // this.broadcastMessageToNode(new DataMessage(recipt), node);
             // Node client = txToSender.get(tx);
@@ -239,7 +269,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
             this.mempool.remove(tx);
             // System.out.println("Mempool size: " + this.mempool.size());
         }
-        // here we need to tell the cross shard consensus algorith to unlock the accounts or do it in another function called form PBFT consensus TODO
+        // here we need to tell the cross shard consensus algorith to unlock the accounts or do it in another function called form PBFT consensus
     }
 
     public ArrayList<EthereumAccount> getShardAccounts() {

@@ -3,13 +3,13 @@ package jabs.log;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import jabs.ledgerdata.ethereum.EthereumAccount;
-import jabs.simulator.event.AccountUnlockingEvent;
+import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.simulator.event.Event;
+import jabs.simulator.event.TransactionAbortedEvent;
 
-public class AccountUnlockingLogger extends AbstractCSVLogger {
+public class TransactionAbortedLogger extends AbstractCSVLogger {
 
-    public AccountUnlockingLogger(Path path) throws IOException {
+    public TransactionAbortedLogger(Path path) throws IOException {
         super(path);
     }
 
@@ -25,7 +25,7 @@ public class AccountUnlockingLogger extends AbstractCSVLogger {
 
     @Override
     protected boolean csvOutputConditionAfterEvent(Event event) {
-        return event instanceof AccountUnlockingEvent;
+        return event instanceof TransactionAbortedEvent;
     }
 
     @Override
@@ -35,20 +35,20 @@ public class AccountUnlockingLogger extends AbstractCSVLogger {
 
     @Override
     protected String[] csvHeaderOutput() {
-        return new String[] { "Time", "Account" };
+        return new String[] { "Time", "Tx", "TxCreationTime", "CrossShard" };
     }
 
     @Override
     protected String[] csvEventOutput(Event event) {
-        AccountUnlockingEvent lockingEvent = (AccountUnlockingEvent) event;
-        EthereumAccount account = lockingEvent.getAccount();
-        int nodeID = lockingEvent.getNodeThatUnlocked().getNodeID();
 
-        // Time, Account
+        EthereumTx tx = ((TransactionAbortedEvent) event).getTx();
+
+        // Time, Tx, Tx creation time
         return new String[] {
                 Double.toString(this.scenario.getSimulator().getSimulationTime()),
-                account.toString(),
-                Integer.toString(nodeID)
+                Integer.toString(tx.hashCode()),
+                Double.toString(tx.getCreationTime()),
+                Boolean.toString(tx.getCrossShard())
         };
     }
 
