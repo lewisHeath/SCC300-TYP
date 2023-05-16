@@ -11,6 +11,7 @@ import jabs.network.networks.Network;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.TransactionAbortedEvent;
 import jabs.simulator.event.TransactionCommittedEvent;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
 
@@ -63,6 +64,9 @@ public class ShardLedEdgeNodeProtocol implements EdgeNodeProtocol {
                     // the tx is aborted, add to queue of txs to try again maybe and remove from data structure
                     this.preparedTxs.remove(tx);
                     // System.out.println("Transaction " + tx + " was aborted");
+                    // aborted event
+                    TransactionAbortedEvent txAbortedEvent = new TransactionAbortedEvent(this.node.getSimulator().getSimulationTime(), tx);
+                    this.node.getSimulator().putEvent(txAbortedEvent, 0);
                 }
             }
         }

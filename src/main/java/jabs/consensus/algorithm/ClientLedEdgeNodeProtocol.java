@@ -7,6 +7,7 @@ import jabs.network.message.Packet;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
+import jabs.simulator.event.TransactionAbortedEvent;
 import jabs.simulator.event.TransactionCommittedEvent;
 import jabs.network.networks.Network;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
@@ -82,6 +83,9 @@ public class ClientLedEdgeNodeProtocol implements EdgeNodeProtocol {
                     txToPrepareNOTOKs.remove(tx);
                     // add the transaction to the aborted transactions list
                     abortedTransactions.add(tx);
+                    // aborted event
+                    TransactionAbortedEvent txAbortedEvent = new TransactionAbortedEvent(this.node.getSimulator().getSimulationTime(), tx);
+                    this.node.getSimulator().putEvent(txAbortedEvent, 0);
                 }
             }
             // if the message is a committed
@@ -93,7 +97,7 @@ public class ClientLedEdgeNodeProtocol implements EdgeNodeProtocol {
                     // the tx is now committed
                     // System.out.println("Transaction is committed!");
                     ((PBFTShardedNetwork) this.network).committedTransactions++;
-                    // event
+                    // transaction committed event
                     TransactionCommittedEvent txCommittedEvent = new TransactionCommittedEvent(this.node.getSimulator().getSimulationTime(), tx);
                     this.node.getSimulator().putEvent(txCommittedEvent, 0);
                     // remove the transaction from the map

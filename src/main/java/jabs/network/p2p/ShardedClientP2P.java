@@ -12,7 +12,6 @@ public class ShardedClientP2P extends AbstractP2PConnections {
     }
     @Override
     public boolean requestConnection(Node node) {
-        // TODO
         return false;
     }
 }

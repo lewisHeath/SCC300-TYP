@@ -146,7 +146,7 @@ public abstract class AbstractScenario {
         // System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
         System.out.println("Committed transactions: " + ((PBFTShardedNetwork)this.network).committedTransactions);
 
-        System.out.println("For testing purposes, only cross shard txs are sent to the network");
+        // System.out.println("For testing purposes, only cross shard txs are sent to the network");
 
         System.err.printf("Finished %s.\n", this.name);
     }
