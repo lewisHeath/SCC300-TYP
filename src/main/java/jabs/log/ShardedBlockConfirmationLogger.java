@@ -1,8 +1,6 @@
 package jabs.log;
-
 import java.io.IOException;
 import java.nio.file.Path;
-
 import jabs.ledgerdata.Block;
 import jabs.network.node.nodes.Node;
 import jabs.simulator.event.Event;

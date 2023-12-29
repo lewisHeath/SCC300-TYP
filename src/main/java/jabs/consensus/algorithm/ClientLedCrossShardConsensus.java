@@ -6,9 +6,14 @@ import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.simulator.event.AccountLockingEvent;
 import jabs.simulator.event.AccountUnlockingEvent;
+import jabs.simulator.event.MigrationEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
+import jabs.ledgerdata.Sharding.CrossShardTransaction;
 import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.ledgerdata.pbft.PBFTBlock;
@@ -25,6 +30,10 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private int thisID;
     private int nodesInShard;
     private PBFTShardedNetwork network;
+    private HashMap<EthereumAccount, Integer> crossShardTransactionCount = new HashMap<>(); // counter for crosshard transactions occuring
+    private int currentShard = 0;
+    private int newShard = 0;
+    private Set<EthereumAccount> accountsInMigration = new HashSet<>(); //hashset to save the current account that is migrating
 
     public ClientLedCrossShardConsensus(PBFTShardedNode node) {
         this.node = node;
@@ -120,7 +129,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         preparedTransactions.add(tx);
     }
 
-    private void processCommitMessage(EthereumTx tx, Node from) {
+    private void processCommitMessage(EthereumTx tx, Node from) {   ////////////////// 55555       here
         // add the transaction to the mempool
         if (preparedTransactionsFrom.get(tx) == from) {
             node.processNewTx(tx, from);
@@ -177,8 +186,27 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                         node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
                     }
                 }
-            }
-        }
+                int migrationThreshold = 10; // Set threshold value manually for now
+                for (EthereumAccount account : accounts){
+                    // Check if the migration threshold is reached
+                    if (((PBFTShardedNetwork) this.network).clientCrossShardTransactions >= migrationThreshold) {
+                        // Get the current shard for the account
+                        currentShard = network.accountToShard.getOrDefault(account, -1);
+                        System.out.println("111111111111111111111111111111111111111111111111111111111111111111111111111111");
+                        System.out.println("Shard for account " + account + ": " + currentShard);
+
+                        migrateAccount(account); // migrate the account to a random shard for now
+                        ((PBFTShardedNetwork) this.network).clientCrossShardTransactions = 0; // Reset the count after migration
+                    }
+                }
+            }   
+    }
+    }
+
+
+    private boolean isAccountInMigration(EthereumAccount account) {
+    // return true if the account is migrating, or migrated   
+        return accountsInMigration.contains(account);
     }
 
 
@@ -206,5 +234,22 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             }
         }
         return i == accounts.size();
+    }
+  
+
+    @Override
+    public void migrateAccount(EthereumAccount accounts) {
+        currentShard = network.accountToShard.getOrDefault(accounts, -1); // get the current shard
+        newShard = network.getRandomAccount(true).getShardNumber(); // rondom shard to send the account to for now, soon need to send to only the shards that are in for cross-shard transactions
+        network.accountToShard.put(accounts, newShard); // store the account and the new shard
+
+        // Log or notify about the account migration
+        System.out.println("Account " + accounts + " migrated from Shard " + currentShard + " to Shard " + newShard);
+        accountsInMigration.add(accounts);
+        // Create a migration event
+        MigrationEvent migrationEvent = new MigrationEvent(0, accounts, currentShard, newShard);
+        
+        // Put the migration event into the simulator's event queue
+        this.node.getSimulator().putEvent(migrationEvent, 0);
     }
 }

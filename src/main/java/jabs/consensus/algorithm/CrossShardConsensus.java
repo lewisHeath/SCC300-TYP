@@ -19,5 +19,7 @@ public interface CrossShardConsensus {
 
     public Boolean areAllAccountsInThisShard(ArrayList<EthereumAccount> accounts);
 
+    public void migrateAccount(EthereumAccount accounts);
+
     public void setID(int ID);
 }

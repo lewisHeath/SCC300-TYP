@@ -33,7 +33,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     private final ArrayList<ArrayList<PBFTShardedNode>> shards = new ArrayList<ArrayList<PBFTShardedNode>>();
     private ArrayList<ShardedClient> clients = new ArrayList<ShardedClient>();
     // mapping of ethereum accounts to shards
-    private HashMap<EthereumAccount, Integer> accountToShard = new HashMap<EthereumAccount, Integer>();
+    public HashMap<EthereumAccount, Integer> accountToShard = new HashMap<EthereumAccount, Integer>();
     private HashMap<Integer, ArrayList<EthereumAccount>> shardToAccounts = new HashMap<Integer, ArrayList<EthereumAccount>>();
     public int intraShardTransactions = 0;
     public int crossShardTransactions = 0;
@@ -46,6 +46,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public HashMap<EthereumAccount, Integer> amountOfTimesUsed = new HashMap<EthereumAccount, Integer>();
     private boolean clientLed;
     private ArrayList<Double> cdf;
+   
+
+    
     
     public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
@@ -67,7 +70,6 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         cdf = new ArrayList<>();
         int numAccounts = accountToShard.size();
         double normalization = 0;
-
         for (int i = 1; i <= numAccounts; i++) {
             normalization += Math.pow(i, -exponent);
         }
@@ -120,6 +122,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (Node node : this.getAllNodes()) {
             node.getP2pConnections().connectToNetwork(this);
         }
+        
         // create the clients
         int amountOfBlockchainNodes = this.getAllNodes().size();
         for(int i = amountOfBlockchainNodes; i < numberOfClients + amountOfBlockchainNodes; i++) {
@@ -252,6 +255,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         return this.clients.get(randomClientIndex);
     }
 
+
     public ArrayList<PBFTShardedNode> getAllNodesFromShard(int shardNumber) {
         return this.shards.get(shardNumber);
     }
@@ -290,5 +294,16 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public int getNodesPerShard() {
         return this.nodesPerShard;
+    }
+
+    public HashMap<EthereumAccount, Integer> accountMigration(HashMap<EthereumAccount, Integer> accountToShard)
+    {
+        // lets start with after a fixed number of crosshard transactions
+        if(clientCrossShardTransactions > 20)
+        {
+
+
+        }
+        return this.accountToShard;
     }
 }

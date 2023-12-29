@@ -466,4 +466,10 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
             txToCommits.put(tx, commits);
         }
     }
+
+    @Override
+    public void migrateAccount(EthereumAccount accounts) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'migrateAccount'");
+    }
 }

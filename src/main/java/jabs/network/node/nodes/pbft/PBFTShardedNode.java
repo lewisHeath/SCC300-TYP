@@ -71,7 +71,7 @@ public class PBFTShardedNode extends PeerBlockchainNode<PBFTBlock, EthereumTx> {
         // for now assuming this only happens when another shard sends the transaction to this shard
         // add it to the mempool
         if(from instanceof PBFTShardedNode) {
-            if (((PBFTShardedNode)from).getShardNumber() != this.shardNumber) {
+            if (((PBFTShardedNode)from).shardNumber != this.shardNumber) {
                 System.out.println("CRITICAL ERROR: transaction from another shard sent to this shard");
             }
         }  

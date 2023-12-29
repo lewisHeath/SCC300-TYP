@@ -108,7 +108,7 @@ public class NetworkInterface {
      */
     public void addToUpLinkQueue(Packet packet) {
         if (!this.networkInterfaceDown) {
-            this.addToLinkQueue(packet, this.messageSendingProcess);
+            this.addToLinkQueue(packet, this.messageSendingProcess); // add the packet to the queue, and as event if the queue is empty
         }
     }
 

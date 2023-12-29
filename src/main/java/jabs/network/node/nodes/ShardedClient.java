@@ -24,7 +24,6 @@ import jabs.simulator.event.TransactionCreationEvent;
 import jabs.simulator.event.TxGenerationProcessSingleNode;
 
 public class ShardedClient extends Node{
-
     private ArrayList<EthereumTx> txs;
     private EdgeNodeProtocol protocol;
     protected Simulator.ScheduledEvent txGenerationProcess;
@@ -56,6 +55,7 @@ public class ShardedClient extends Node{
             if(type.equals("intra-shard-committed")){
                 // process intra shard committed tx
                 this.processIntraShardCommittedTx((EthereumTx) data, shard);
+                System.out.println("Sharded client class: processing and intrashard tx.... : shard N* :  " + shard);
             }
             // System.out.println("Client recieved " + type + " from node: " + packet.getFrom().getNodeID());
             if (data instanceof EthereumTx) {
@@ -126,13 +126,15 @@ public class ShardedClient extends Node{
                 crossShard = true;
                 break;
             }
+            else{
+                System.out.println("Sender shard : " + senderShard + "Receiver shard : " + receiverShard);
+            }
         }
 
-        if (crossShard) {
-
+        if (crossShard){      
             // print the shards involved in the transaction
+            System.out.println("CrossShard Transaction occuring....");
             System.out.println("Sender shard: " + senderShard);
-            System.out.println("Receiver shards: ");
             for (int i = 0; i < tx.getReceivers().size(); i++) {
                 System.out.println(((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceivers().get(i)));
             }
@@ -149,6 +151,7 @@ public class ShardedClient extends Node{
             this.simulator.putEvent(event, 0);
             this.sendCrossShardTransaction(tx);
         } else {
+            System.out.println("IntraShard Transaction occuring....");
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);
             tx.setCrossShard(false);
@@ -183,6 +186,6 @@ public class ShardedClient extends Node{
     }
 
     private void sendCrossShardTransaction(EthereumTx tx) {
-        this.protocol.sendTransaction(tx);
+        this.protocol.sendTransaction(tx); // send tx
     }
 }

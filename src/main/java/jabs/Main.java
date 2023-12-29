@@ -33,7 +33,7 @@ public class Main {
         System.out.println("Current time: " + start.toString());
 
         // SHARD LED SIMULATIONS
-
+/* 
         int randomNum = 1;
         for(randomNum = 1; randomNum < 2; randomNum++){
             System.out.println("randomNum: " + randomNum);
@@ -49,14 +49,15 @@ public class Main {
                 scenario.run();
             }
         }
-        
+        */
+
         // CLIENT LED SIMULATIONS
 
-        randomNum = 1;
+        int randomNum = 1;
         for(randomNum = 1; randomNum < 2; randomNum++){
             System.out.println("randomNum: " + randomNum);
             for(int i = 128, j = 6; i <= 128; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, i, 10, clients[j], 1, 60, "client");
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, i, 10, clients[j], 1, 1, "client");
                 // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
                 scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
                 scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
