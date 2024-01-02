@@ -6,6 +6,8 @@ import java.util.HashMap;
 import org.apache.commons.math3.distribution.BetaDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
 
+import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
+import jabs.consensus.algorithm.CrossShardConsensus;
 import jabs.consensus.config.ConsensusAlgorithmConfig;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
@@ -46,6 +48,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public HashMap<EthereumAccount, Integer> amountOfTimesUsed = new HashMap<EthereumAccount, Integer>();
     private boolean clientLed;
     private ArrayList<Double> cdf;
+    public int MigrationCounts = 0;
+  
    
 
     
@@ -64,6 +68,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.generateAccounts(1000000);
         this.clientLed = clientLed;
         this.generateCDF(1.2);
+        
     }
 
     private void generateCDF(double exponent) {
@@ -73,7 +78,6 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (int i = 1; i <= numAccounts; i++) {
             normalization += Math.pow(i, -exponent);
         }
-
         double cumulative = 0;
         for (int i = 1; i <= numAccounts; i++) {
             cumulative += Math.pow(i, -exponent) / normalization;
@@ -296,14 +300,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         return this.nodesPerShard;
     }
 
-    public HashMap<EthereumAccount, Integer> accountMigration(HashMap<EthereumAccount, Integer> accountToShard)
+    public int accountMigration(int count)
     {
         // lets start with after a fixed number of crosshard transactions
-        if(clientCrossShardTransactions > 20)
-        {
-
-
-        }
-        return this.accountToShard;
+        MigrationCounts = count;
+        return MigrationCounts;
     }
 }

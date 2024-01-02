@@ -22,4 +22,5 @@ public interface CrossShardConsensus {
     public void migrateAccount(EthereumAccount accounts);
 
     public void setID(int ID);
+
 }
