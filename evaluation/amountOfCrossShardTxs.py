@@ -2,17 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-df_1_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-1s10n50c.csv')
-# import the data shard led
-df_2_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-2s10n50c.csv')
-df_4_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed2/Shardled-CommittedLogger-4s10n100c.csv')
-df_8_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-8s10n100c.csv')
-df_16_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-16s10n200c.csv')
-df_32_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-32s10n400c.csv')
-df_64_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-64s10n800c.csv')
-df_128_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-128s10n800c.csv')
-df_192_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-192s10n800c.csv')
-df_256_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-256s10n800c.csv')
 
 # import the data client led
 df_1_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-1s10n50c.csv')
