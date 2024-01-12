@@ -468,9 +468,14 @@ public class ShardLedCrossShardConsensus implements CrossShardConsensus{
     }
 
     @Override
-    public void migrateAccount(EthereumAccount accounts) {
+    public void migrateAccount(EthereumAccount accounts, EthereumAccount receiverShardNumber,
+            EthereumAccount CurrentShard) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'migrateAccount'");
     }
+
+  
+
+   
 
 }

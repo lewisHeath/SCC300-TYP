@@ -2,7 +2,7 @@ package jabs.network.node.nodes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
+import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
 import jabs.consensus.algorithm.ClientLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.EdgeNodeProtocol;
 import jabs.consensus.algorithm.ShardLedEdgeNodeProtocol;
@@ -108,13 +108,14 @@ public class ShardedClient extends Node{
         for (int i = 0; i < numAccounts; i++) {
             EthereumAccount account = ((PBFTShardedNetwork) network).getRandomAccount(true);
             accounts.add(account);
-
         }
-        // set sender and receiver(s)
-        tx.setSender(accounts.get(0));
-        accounts.remove(0);
-        tx.setReceiver(accounts.get(0));
-        tx.setReceivers(accounts);
+
+          // set sender and receiver(s)
+          tx.setSender(accounts.get(0));
+          accounts.remove(0);
+          tx.setReceiver(accounts.get(0));
+          tx.setReceivers(accounts);
+         // tx.setReceiver1(accounts.get(0)); // this is for migration
 
         txs.add(tx);
         int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
@@ -136,7 +137,7 @@ public class ShardedClient extends Node{
             System.out.println("CrossShard Transaction occuring....");
             System.out.println("Sender shard: " + senderShard);
             for (int i = 0; i < tx.getReceivers().size(); i++) {
-                System.out.println(((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceivers().get(i)));
+                System.out.println("Receiver Account" + ((PBFTShardedNetwork) this.network).getAccountShard(tx.getReceivers().get(i)));
             }
             // print the involved accounts
             System.out.println("Involved accounts: ");

@@ -31,7 +31,8 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private int nodesInShard;
     private PBFTShardedNetwork network;
     public int MigrationCount = 0; // counter for crosshard transactions occuring
-    private int currentShard = 0;
+    private EthereumAccount currentShard;
+    private EthereumAccount ReceiverShard;
     private int newShard = 0;
     private Set<EthereumAccount> accountsInMigration = new HashSet<>(); //hashset to save the current account that is migrating
     private HashMap<EthereumAccount, Integer> crossShardTransactionCount = new HashMap<>();
@@ -163,71 +164,64 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         // get the transactions from the block
         ArrayList<EthereumTx> transactions = block.getTransactions();
         for (EthereumTx tx : transactions) {
-
-              // Update cross-shard transaction count for involved accounts
+            // Update cross-shard transaction count for involved accounts
             for (EthereumAccount account : tx.getAllInvolvedAccounts()) {
+                System.out.println("INVOLVE ACCOUNTS IN PROCESS: " + account.getShardNumber());
                 int accountCrossShardCount = crossShardTransactionCount.getOrDefault(account, 0);
                 crossShardTransactionCount.put(account, accountCrossShardCount + 1);
-                }
+            }
     
             // if the transaction is in the prepared transactions list, unlock the accounts
-            if(preparedTransactionsFrom.containsKey(tx)){
-                ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
-                // this needs upgrading to handle smart contract transactions
-                accounts.addAll(tx.getAllInvolvedAccounts());
+            if (preparedTransactionsFrom.containsKey(tx)) {
+                ArrayList<EthereumAccount> accounts = new ArrayList<>(tx.getAllInvolvedAccounts());
                 // unlock the accounts
                 System.out.println("size of locked accounts before confirming: " + lockedAccounts.size());
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
                     // account unlocking event
                     AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account, this.node);
-                    if(thisID == 0) this.node.getSimulator().putEvent(event, 0);
-                    // System.out.println("Unlocking account " + account);
+                    if (thisID == 0) this.node.getSimulator().putEvent(event, 0);
                 }
                 lockedAccounts.removeAll(accounts);
                 System.out.println("size of locked accounts after confirming: " + lockedAccounts.size());
                 // send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");
                 // NODE 0 TELL ALL NODES WHAT TO DO
-                if(thisID == 0){
+                if (thisID == 0) {
                     ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
                     // FORCE MESSAGE
                     for (PBFTShardedNode node : nodes) {
                         node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
                     }
                 }
-              // new Policy
-          // new Policy
-        // when a transaction requires cross-shard transactions more than twice, migrate the accounts
-       // Inside the processConfirmedBlock method
-        for (EthereumAccount account : accounts) {
-            int migrationThreshold = 3; // Set threshold value manually for now
-
-            // Increment the cross-shard transaction count for the current account
-            int accountCrossShardCount = crossShardTransactionCount.getOrDefault(account, 0);
-            crossShardTransactionCount.put(account, accountCrossShardCount + 1);
-
-            // Print debug information
-            System.out.println("Account: " + account);
-            System.out.println("Current cross-shard count: " + accountCrossShardCount);
-            System.out.println("Migration threshold: " + migrationThreshold);
-
-            // Check if the migration threshold is reached for the current account
-            if (accountCrossShardCount >= migrationThreshold) {
-                // Get the current shard for the account
-                currentShard = network.accountToShard.getOrDefault(account, account.getShardNumber());
-                System.out.println("111111111111111111111111111111111111111111111111111111111111111111111111111111");
-                System.out.println("Shard for account " + account + ": " + currentShard);
-                migrateAccount(account); // Migrate the account to a random shard for now
-                // Reset the count after migration
-                crossShardTransactionCount.put(account, 0);
+    
+                // Check for migration
+                for (EthereumAccount account : tx.getAllInvolvedAccounts()) {
+                    int migrationThreshold = 2; // Set threshold value manually for now
+    
+                    // Increment the cross-shard transaction count for the current account
+                    int accountCrossShardCount = crossShardTransactionCount.getOrDefault(tx.getReceiver(), 0);
+                    crossShardTransactionCount.put(tx.getReceiver(), accountCrossShardCount + 1);
+    
+                    // Print debug information
+                    System.out.println("Account: " + account);
+                    System.out.println("Current cross-shard count: " + accountCrossShardCount);
+               
+    
+                    // Check if the migration threshold is reached for the current account
+                    if (accountCrossShardCount >= migrationThreshold) {
+                        System.out.println("5555555555555555555555555555");
+                        System.out.println("Sender: " + account.getShardNumber() + " Receiver :" + tx.getReceiver().getShardNumber()) ;
+                        migrateAccount(account, tx.getReceiver(), account);
+                        // Reset the count after migration
+                        crossShardTransactionCount.remove(tx.getReceiver());
+                      //  crossShardTransactionCount.put(tx.getReceiver(), 0);
+                    }
                 }
             }
-        
         }
     }
-}
-
+    
 
     private boolean isAccountInMigration(EthereumAccount account) {
     // return true if the account is migrating, or migrated   
@@ -260,20 +254,33 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         }
         return i == accounts.size();
     }
+
+
+    private int getReceiverShard( EthereumTx tx) {
+        for (int receiverShard : tx.getAllInvolvedShards() ) {
+            int receiverShards = receiverShard;
+            System.out.println("GETRECEIVEDSHARD FUNCTION" + receiverShards );
+            return receiverShard;
+        }
+        return 0;  
+    }
     
     @Override
-    public void migrateAccount(EthereumAccount accounts) {
+    public void migrateAccount(EthereumAccount accounts, EthereumAccount receiverAccount, EthereumAccount currentAccount) {
         MigrationCount++;
         ((PBFTShardedNetwork) this.network).MigrationCounts = MigrationCount;    
-        currentShard = network.accountToShard.getOrDefault(accounts, accounts.getShardNumber()); // get the current shard
-        newShard = network.getRandomAccount(true).getShardNumber(); // random shard to send the account to for now, soon need to send to only the shards that are in for cross-shard transactions
-        network.accountToShard.put(accounts, newShard); // store the account and the new shard
-        network.addAccount(accounts, newShard);
+      // newShard = network.getRandomAccount(true).getShardNumber(); // random shard to send the account to for now, soon need to send to only the shards that are in for cross-shard transactions
+       // network.accountToShard.put(currentAccount, receiverAccount.getShardNumber()); // store the account in the new shard
+       // network.accountToShard.remove(currentAccount);
+        
+        this.network.addAccount(currentAccount, receiverAccount.getShardNumber());
+        System.out.println("New Account Now in shard N* :" + this.network.getAccountShard(currentAccount));
         // Log or notify about the account migration
-        System.out.println("Account " + accounts + " migrated from Shard " + currentShard + " to Shard " + newShard);
-        accountsInMigration.add(accounts);
+        System.out.println("Account " + currentAccount + " migrated from Shard " +  currentAccount.getShardNumber() + " to Shard " + receiverAccount.getShardNumber());
+        
+        accountsInMigration.add(currentAccount);
         // Create a migration event
-        MigrationEvent migrationEvent = new MigrationEvent(0, accounts, currentShard, newShard);
+        MigrationEvent migrationEvent = new MigrationEvent(this.node.getSimulator().getSimulationTime(), currentAccount, currentAccount.getShardNumber(), receiverAccount.getShardNumber());
         // Put the migration event into the simulator's event queue
         this.node.getSimulator().putEvent(migrationEvent, 0);
     }
