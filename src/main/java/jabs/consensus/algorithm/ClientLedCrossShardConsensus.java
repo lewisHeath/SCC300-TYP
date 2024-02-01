@@ -44,7 +44,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
         this.network = (PBFTShardedNetwork) node.getNetwork();
         this.clientCrossShardTransactions = 0;
-        this.migrationPolicy = new ThresholdMigrationPolicy(3000, this.network, accountsInMigration, this.node); // migration policy called and set
+        this.migrationPolicy = new ThresholdMigrationPolicy(30000, this.network, accountsInMigration, this.node); // migration policy called and set
     }
 
     public void setID(int ID){
@@ -200,11 +200,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                 int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
             for (EthereumAccount account : tx.getReceivers()) {
                 int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(account);
-                int migrati = 0;
+               
                 // if crossshard, migrate
                 if (senderShard != receiverShard) {
-                    migrati++;
-                    System.out.println("MIGRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATION :" + migrati);
                     migrationPolicy.migrateIfNecessary(account, tx.getReceiver(),tx.getSender(), crossShardTransactionCount);
                 } else {
                     System.out.println("Intra shard DETECTED, No need to migrate");

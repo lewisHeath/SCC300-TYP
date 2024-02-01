@@ -13,7 +13,7 @@ public class ThresholdMigrationPolicy implements MigrationPolicy {
     private PBFTShardedNetwork network;
     private Set<EthereumAccount> accountsInMigration;
     private PBFTShardedNode node;
-    public int MigrationCount = 0;
+   // public int MigrationCount = 0;
 
     public ThresholdMigrationPolicy(int migrationThreshold, PBFTShardedNetwork network, Set<EthereumAccount> accountsInMigration, PBFTShardedNode node) {
         this.migrationThreshold = migrationThreshold;
@@ -49,8 +49,8 @@ public class ThresholdMigrationPolicy implements MigrationPolicy {
 
     @Override
     public void migrateAccount(EthereumAccount accounts, EthereumAccount receiverAccount, EthereumAccount currentAccount) {
-        MigrationCount++;
-        ((PBFTShardedNetwork)network).MigrationCounts = MigrationCount;    
+       // MigrationCount++;
+       // ((PBFTShardedNetwork)network).MigrationCounts++;  
       // newShard = network.getRandomAccount(true).getShardNumber(); // random shard to send the account to for now, soon need to send to only the shards that are in for cross-shard transactions
        // network.accountToShard.put(currentAccount, receiverAccount.getShardNumber()); // store the account in the new shard
        // network.accountToShard.remove(currentAccount);
@@ -60,7 +60,7 @@ public class ThresholdMigrationPolicy implements MigrationPolicy {
         System.out.println("Account " + currentAccount + " migrated from Shard " +  currentAccount.getShardNumber() + " to Shard " + receiverAccount.getShardNumber());
         accountsInMigration.add(currentAccount);
         // Create a migration event
-        MigrationEvent migrationEvent = new MigrationEvent(node.getSimulator().getSimulationTime(), currentAccount, currentAccount.getShardNumber(), receiverAccount.getShardNumber());
+        MigrationEvent migrationEvent = new MigrationEvent(node.getSimulator().getSimulationTime(), currentAccount, currentAccount.getShardNumber(), receiverAccount.getShardNumber(),migrationThreshold,((PBFTShardedNetwork)this.network).clientCrossShardTransactions, ((PBFTShardedNetwork)this.network).clientIntraShardTransactions, ((PBFTShardedNetwork)this.network).committedTransactions,((PBFTShardedNetwork)network).MigrationCounts++);
         // Put the migration event into the simulator's event queue
         node.getSimulator().putEvent(migrationEvent, 0);
     }

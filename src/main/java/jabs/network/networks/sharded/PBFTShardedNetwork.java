@@ -300,10 +300,5 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         return this.nodesPerShard;
     }
 
-    public int accountMigration(int count)
-    {
-        // lets start with after a fixed number of crosshard transactions
-        this.MigrationCounts = count;
-        return this.MigrationCounts;
-    }
+   
 }
