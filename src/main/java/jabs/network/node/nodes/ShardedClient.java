@@ -2,10 +2,15 @@ package jabs.network.node.nodes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
 import jabs.consensus.algorithm.ClientLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.EdgeNodeProtocol;
+import jabs.consensus.algorithm.MigrationPolicy;
 import jabs.consensus.algorithm.ShardLedEdgeNodeProtocol;
+import jabs.consensus.algorithm.ThresholdMigrationPolicy;
 import jabs.ledgerdata.Data;
 import jabs.ledgerdata.TransactionFactory;
 import jabs.ledgerdata.ethereum.EthereumAccount;
@@ -29,12 +34,17 @@ public class ShardedClient extends Node{
     protected Simulator.ScheduledEvent txGenerationProcess;
     private int timeBetweenTxs;
     private HashMap<EthereumTx, Integer> intraShardTxCommitCount;
+    private ThresholdMigrationPolicy migrationPolicy;
+    private Set<EthereumAccount> accountsInMigration = new HashSet<>(); //hashset to save the current account that is migrating
+    private PBFTShardedNode node;
+    private HashMap<EthereumAccount, Integer> crossShardTransactionCount = new HashMap<>();
 
-    public ShardedClient(Simulator simulator, Network network, int nodeID, long downloadBandwidth, long uploadBandwidth, int timeBetweenTxs, boolean clientLed) {
+    public ShardedClient(Simulator simulator,Network network, int nodeID, long downloadBandwidth, long uploadBandwidth, int timeBetweenTxs, boolean clientLed) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
         this.txs = new ArrayList<EthereumTx>();
         if(clientLed){
             this.protocol = new ClientLedEdgeNodeProtocol(this, network);
+          //  this.migrationPolicy = new ThresholdMigrationPolicy(0, network, accountsInMigration, network.getNode(nodeID)); // migration policy called and set
         } else {
             this.protocol = new ShardLedEdgeNodeProtocol(this, network);
         }
@@ -133,6 +143,7 @@ public class ShardedClient extends Node{
         }
 
         if (crossShard){      
+          //  migrationPolicy.migrateIfNecessary(tx.getReceiver(), tx.getReceiver(),tx.getSender(), crossShardTransactionCount);
             // print the shards involved in the transaction
             System.out.println("CrossShard Transaction occuring....");
             System.out.println("Sender shard: " + senderShard);
@@ -141,10 +152,13 @@ public class ShardedClient extends Node{
             }
             // print the involved accounts
             System.out.println("Involved accounts: ");
-            for (EthereumAccount tempAccount : tx.getAllInvolvedAccounts()){
+            for (EthereumAccount tempAccount : tx.getAllInvolvedAccounts()){   
+                System.out.println("INVOLVE ACCOUNTS IN PROCESS: " + tempAccount.getShardNumber());
+                int accountCrossShardCount = crossShardTransactionCount.getOrDefault(tempAccount, 0);
+                crossShardTransactionCount.put(tempAccount, accountCrossShardCount + 1);
                 System.out.println(tempAccount);
             }
-
+           
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
             tx.setCrossShard(true);
             // create transaction creation event

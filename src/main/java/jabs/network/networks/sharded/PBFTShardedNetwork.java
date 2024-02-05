@@ -68,12 +68,12 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.generateAccounts(1000000);
         this.clientLed = clientLed;
         this.generateCDF(1.2);
-        
     }
 
     private void generateCDF(double exponent) {
         cdf = new ArrayList<>();
         int numAccounts = accountToShard.size();
+       // print("Num " + numAccounts);
         double normalization = 0;
         for (int i = 1; i <= numAccounts; i++) {
             normalization += Math.pow(i, -exponent);

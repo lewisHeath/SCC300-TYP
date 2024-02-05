@@ -6,6 +6,6 @@ import jabs.ledgerdata.ethereum.EthereumAccount;
 
 // MigrationPolicy interface
 public interface MigrationPolicy {
-    void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver, EthereumAccount sender, Map<EthereumAccount, Integer> crossShardTransactionCount);
+    void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver, EthereumAccount sender, Map<String, Integer> crossShardTransactionCount);
     void migrateAccount(EthereumAccount accounts, EthereumAccount receiverAccount, EthereumAccount currentAccount);
 }
