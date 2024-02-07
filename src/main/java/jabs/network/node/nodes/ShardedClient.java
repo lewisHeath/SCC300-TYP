@@ -24,6 +24,7 @@ import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.p2p.ShardedClientP2P;
 import jabs.simulator.Simulator;
+import jabs.simulator.event.MigrationEvent;
 import jabs.simulator.event.TransactionCommittedEvent;
 import jabs.simulator.event.TransactionCreationEvent;
 import jabs.simulator.event.TxGenerationProcessSingleNode;
@@ -162,18 +163,22 @@ public class ShardedClient extends Node{
             ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++;
             tx.setCrossShard(true);
             // create transaction creation event
-            TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx);
+            TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx,((PBFTShardedNetwork)this.network).intraShardTransactions,  ((PBFTShardedNetwork) this.network).crossShardTransactions++);
             this.simulator.putEvent(event, 0);
             this.sendCrossShardTransaction(tx);
-        } else {
+            MigrationEvent event2 = new MigrationEvent(this.simulator.getSimulationTime(), null, senderShard, senderShard, 0, ((PBFTShardedNetwork) this.network).clientCrossShardTransactions , ((PBFTShardedNetwork) this.network).clientIntraShardTransactions,((PBFTShardedNetwork) this.network).committedTransactions, 0);
+            this.simulator.putEvent(event2, 0);
+            } else {
             System.out.println("IntraShard Transaction occuring....");
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);
             tx.setCrossShard(false);
             // create transaction creation event
-            TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx);
+            TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx ,  ((PBFTShardedNetwork) this.network).intraShardTransactions++,  ((PBFTShardedNetwork) this.network).crossShardTransactions);
             this.simulator.putEvent(event, 0);
             this.sendTransaction(tx, senderShard);
+            MigrationEvent event2 = new MigrationEvent(this.simulator.getSimulationTime(), null, senderShard, senderShard, 0, ((PBFTShardedNetwork) this.network).clientCrossShardTransactions , ((PBFTShardedNetwork) this.network).clientIntraShardTransactions,((PBFTShardedNetwork) this.network).committedTransactions, 0);
+            this.simulator.putEvent(event2, 0);
         }
     }
 

@@ -49,12 +49,12 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     private boolean clientLed;
     private ArrayList<Double> cdf;
     public int MigrationCounts = 0;
-  
+    public boolean migration;
    
 
     
     
-    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed) {
+    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
@@ -65,9 +65,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         this.region = nodeDistribution.sampleRegion();
         // add accounts
-        this.generateAccounts(1000000);
+        this.generateAccounts(100000);
         this.clientLed = clientLed;
         this.generateCDF(1.2);
+        this.migration = migration;
     }
 
     private void generateCDF(double exponent) {
@@ -298,6 +299,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
 
     public int getNodesPerShard() {
         return this.nodesPerShard;
+    }
+    public boolean migrate(){
+        return migration;
     }
 
    

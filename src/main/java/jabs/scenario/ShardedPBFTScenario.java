@@ -17,9 +17,10 @@ public class ShardedPBFTScenario extends AbstractScenario {
     protected int numberOfClients;
     protected int timeBetweenTxs;
     protected String protocol;
+    protected boolean migration;
 
     public ShardedPBFTScenario(String name, long seed, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs,
-            double simulationStopTime, String protocol) {
+            double simulationStopTime, String protocol, boolean migration) {
         super(name, seed);
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
@@ -27,14 +28,15 @@ public class ShardedPBFTScenario extends AbstractScenario {
         this.numberOfClients = numberOfClients;
         this.timeBetweenTxs = timeBetweenTxs;
         this.protocol = protocol;
+        this.migration = migration;
     }
 
     @Override
     public void createNetwork() {
         if(this.protocol.equals("client")) {
-            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, true);
+            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, true, migration);
         } else if(this.protocol.equals("shard")) {
-            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, false);
+            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, false, migration);
         } else {
             System.out.println("Invalid protocol");
             System.exit(1);
