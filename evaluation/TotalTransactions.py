@@ -19,25 +19,25 @@ numeric_cols = ['CrossShard Transactions', 'IntraShard Transactions', 'Simulatio
 df_migration[numeric_cols] = df_migration[numeric_cols].apply(pd.to_numeric, errors='coerce')
 df_without_migration[numeric_cols] = df_without_migration[numeric_cols].apply(pd.to_numeric, errors='coerce')
 
+# Merge CrossShard and IntraShard transactions for each migration
+df_migration['With Migration'] = df_migration['CrossShard Transactions'] + df_migration['IntraShard Transactions']
+df_without_migration['Without Migration'] = df_without_migration['CrossShard Transactions'] + df_without_migration['IntraShard Transactions']
+
 # Calculate the total transactions for each chunk
-total_migration = df_migration[['CrossShard Transactions', 'IntraShard Transactions']].sum().values
-total_without_migration = df_without_migration[['CrossShard Transactions', 'IntraShard Transactions']].sum().values
+total_migration = df_migration['With Migration'].sum()
+total_without_migration = df_without_migration['Without Migration'].sum()
 
 # Plotting
 fig, ax = plt.subplots()
 
 # Bar plots for chunk with migrations
-ax.bar('With Migration', total_migration[0], label='CrossShard Transactions')
-ax.bar('With Migration', total_migration[1], bottom=total_migration[0], label='IntraShard Transactions')
+ax.bar('With Migration', total_migration, label='Total Transactions with Migration', color='blue')
 
 # Bar plots for chunk without migrations
-ax.bar('Without Migration', total_without_migration[0], label='CrossShard Transactions')
-ax.bar('Without Migration', total_without_migration[1], bottom=total_without_migration[0], label='IntraShard Transactions')
+ax.bar('Without Migration', total_without_migration, label='Total Transactions without Migration', color='orange')
 
 ax.set_ylabel('Number of Transactions')
-ax.set_xlabel('Migration')
-ax.set_title('CrossShard and IntraShard Transactions with and without Migrations')
+ax.set_title('Total CrossShard and IntraShard Transactions with and without Migrations')
 ax.legend()
-
 
 plt.show()
