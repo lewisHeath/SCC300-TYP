@@ -173,13 +173,13 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             for (EthereumAccount receiver : receivers) {
                 System.out.println("INVOLVE ACCOUNTS IN PROCESS: " + sender.getShardNumber() + " -> " + receiver.getShardNumber());
 
-                // Create a unique identifier for the transaction involving both sender and receiver
+                // Create an identifier for the transaction involving both sender and receiver
                 String transactionKey = sender.getShardNumber() + "-" + receiver.getShardNumber();
 
-                // Get the current count for the unique identifier
+                // Getting the current count for the unique identifier
                 int transactionCount = crossShardTransactionCount.getOrDefault(transactionKey, 0);
 
-                // Increment the count
+                // Incrementing the count
                 crossShardTransactionCount.put(transactionKey, transactionCount + 1);
             }
         
@@ -211,6 +211,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             for (EthereumAccount account : tx.getReceivers()) {
                 int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(account);
                
+                //this is just for detection whether we on crossshard or not
                 // if crossshard, migrate
                 if (senderShard != receiverShard && ((PBFTShardedNetwork)this.network).migrate() == true) {
                     migrationPolicy.migrateIfNecessary(account, tx.getReceiver(),tx.getSender(), crossShardTransactionCount);

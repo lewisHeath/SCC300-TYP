@@ -48,7 +48,7 @@ public class MigrationLogger extends AbstractCSVLogger {
     protected String[] csvEventOutput(Event event) {
         // Extract migration-related information from the event and return as an array
         MigrationEvent migrationEvent = (MigrationEvent) event;
-        return new String[]{ "ThresholdType 1" , String.valueOf(migrationEvent.getCrossShardValue()),
+        return new String[]{String.valueOf(migrationEvent.getCrossShardValue()),
                 String.valueOf(migrationEvent.getIntraShardValue()), String.valueOf(migrationEvent.getTime()), String.valueOf(migrationEvent.getMigrationCount())};
     }
 

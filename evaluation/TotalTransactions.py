@@ -2,12 +2,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the without migration data to count its number of rows
-df_without_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-WithoutMigrations-32s10n800c.csv')
+df_without_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-WithoutMigrations-5s10n800c.csv')
 num_rows_without_migration = len(df_without_migration)
+print(num_rows_without_migration)
 
 # Load the migration data
-df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-32s10n800c.csv')
-
+df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-5s10n800c.csv')
+print(len(df_migration))
 # Add empty rows to the migration data to match the number of rows in the without migration data
 num_rows_to_add = num_rows_without_migration - len(df_migration)
 if num_rows_to_add > 0:
@@ -16,6 +17,7 @@ if num_rows_to_add > 0:
 
 # Convert columns to numeric, handling non-numeric values
 numeric_cols = ['CrossShard Transactions', 'IntraShard Transactions', 'Simulation Time']
+
 df_migration[numeric_cols] = df_migration[numeric_cols].apply(pd.to_numeric, errors='coerce')
 df_without_migration[numeric_cols] = df_without_migration[numeric_cols].apply(pd.to_numeric, errors='coerce')
 

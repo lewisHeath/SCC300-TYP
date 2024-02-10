@@ -34,7 +34,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
     // Get the current count for the unique identifier
     int accountCrossShardCount = crossShardTransactionCount.getOrDefault(transactionKey, 0);
 
-    // Print debug information
+    // debug information
     System.out.println("Account: " + account);
     System.out.println("receiver : " + receiver);
     System.out.println("sender :" + sender);
@@ -49,7 +49,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
         migrateAccount(account, receiver, sender);
 
         // Reset the count after migration
-        crossShardTransactionCount.put(transactionKey, 1);
+        crossShardTransactionCount.put(transactionKey, 0);
     }
 }
 
@@ -63,6 +63,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
       // newShard = network.getRandomAccount(true).getShardNumber(); // random shard to send the account to for now, soon need to send to only the shards that are in for cross-shard transactions
        // network.accountToShard.put(currentAccount, receiverAccount.getShardNumber()); // store the account in the new shard
        // network.accountToShard.remove(currentAccount);
+       
         network.addAccount(currentAccount, receiverAccount.getShardNumber());
         System.out.println("Account :" + currentAccount + "  Now in shard N* :" + network.getAccountShard(currentAccount));
         // Log or notify about the account migration
