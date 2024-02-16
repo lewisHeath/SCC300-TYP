@@ -15,6 +15,7 @@ public class ThresholdMigrationPolicy implements MigrationPolicy {
     private PBFTShardedNetwork network;
     private Set<EthereumAccount> accountsInMigration;
     private Node node;
+    private Boolean Policy = false;
    // public int MigrationCount = 0;
 
     public ThresholdMigrationPolicy(int migrationThreshold,  Network network, Set<EthereumAccount> accountsInMigration, Node node) {
@@ -44,10 +45,10 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
     
     // Check if the migration threshold is reached for the current account
     if (accountCrossShardCount >= migrationThreshold) {
+        ((PBFTShardedNetwork)this.network).Policy = "Data Structure Policy";
         System.out.println("5555555555555555555555555555");
         System.out.println("Sender: " + sender.getShardNumber() + " Receiver :" + receiver.getShardNumber());
         migrateAccount(account, receiver, sender);
-
         // Reset the count after migration
         crossShardTransactionCount.put(transactionKey, 0);
     }
@@ -63,7 +64,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
       // newShard = network.getRandomAccount(true).getShardNumber(); // random shard to send the account to for now, soon need to send to only the shards that are in for cross-shard transactions
        // network.accountToShard.put(currentAccount, receiverAccount.getShardNumber()); // store the account in the new shard
        // network.accountToShard.remove(currentAccount);
-       
+       ((PBFTShardedNetwork)network).crossShardTransactions++;
         network.addAccount(currentAccount, receiverAccount.getShardNumber());
         System.out.println("Account :" + currentAccount + "  Now in shard N* :" + network.getAccountShard(currentAccount));
         // Log or notify about the account migration
@@ -74,5 +75,8 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
         // Put the migration event into the simulator's event queue
         node.getSimulator().putEvent(migrationEvent, 0);
     }
+
+
+  
 
 }

@@ -7,7 +7,7 @@ num_rows_without_migration = len(df_without_migration)
 print(num_rows_without_migration)
 
 # Load the migration data
-df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-5s10n800c.csv')
+df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-16s10n800c.csv')
 print(len(df_migration))
 # Add empty rows to the migration data to match the number of rows in the without migration data
 num_rows_to_add = num_rows_without_migration - len(df_migration)

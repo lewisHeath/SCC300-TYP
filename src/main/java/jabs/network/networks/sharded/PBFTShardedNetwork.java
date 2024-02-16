@@ -2,6 +2,7 @@ package jabs.network.networks.sharded;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
@@ -50,6 +51,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     private ArrayList<Double> cdf;
     public int MigrationCounts = 0;
     public boolean migration;
+    public String Policy = "";
+   
    
 
     
@@ -304,6 +307,15 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public boolean migrate(){
         return migration;
     }
+   public EthereumAccount getAccountByShardNumber(int shardNumber) {
+    for (Map.Entry<EthereumAccount, Integer> entry : accountToShard.entrySet()) {
+        if (entry.getValue() == shardNumber) {
+            return entry.getKey(); // Return the account associated with the shardNumber, it can be any account in that shard
+            }
+        }
+     return null; // Return null if no account is found for the given shardNumber
+    }
+
 
    
 }

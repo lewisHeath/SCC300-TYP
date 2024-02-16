@@ -8,6 +8,7 @@ import java.util.Set;
 import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
 import jabs.consensus.algorithm.ClientLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.EdgeNodeProtocol;
+import jabs.consensus.algorithm.MigrationOfExistingAccounts;
 import jabs.consensus.algorithm.MigrationPolicy;
 import jabs.consensus.algorithm.ShardLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.ThresholdMigrationPolicy;
@@ -21,6 +22,7 @@ import jabs.network.message.Message;
 import jabs.network.message.Packet;
 import jabs.network.networks.Network;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
+import jabs.network.networks.sharded.ShardLoadTracker;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.p2p.ShardedClientP2P;
 import jabs.simulator.Simulator;
@@ -39,6 +41,10 @@ public class ShardedClient extends Node{
     private Set<EthereumAccount> accountsInMigration = new HashSet<>(); //hashset to save the current account that is migrating
     private PBFTShardedNode node;
     private HashMap<EthereumAccount, Integer> crossShardTransactionCount = new HashMap<>();
+   // private int shardNumber = ((PBFTShardedNode) packet.getFrom()).getShardNumber(); 
+    public ShardLoadTracker shardLoadTracker = new ShardLoadTracker(); // keeps track of the load of the shards.
+    private int ShardLoad = 0;
+   
 
     public ShardedClient(Simulator simulator,Network network, int nodeID, long downloadBandwidth, long uploadBandwidth, int timeBetweenTxs, boolean clientLed) {
         super(simulator, network, nodeID, downloadBandwidth, uploadBandwidth, new ShardedClientP2P());
@@ -130,11 +136,14 @@ public class ShardedClient extends Node{
 
         txs.add(tx);
         int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
+        
         // check if the sender shard is not the same as ANY of the receiver shards
         boolean crossShard = false;
         for (EthereumAccount account : tx.getReceivers()) {
             int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(account);
+        
             if (senderShard != receiverShard) {
+                
                 crossShard = true;
                 break;
             }

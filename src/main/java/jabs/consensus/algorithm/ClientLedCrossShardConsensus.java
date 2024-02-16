@@ -2,6 +2,7 @@ package jabs.consensus.algorithm;
 
 import jabs.network.message.CoordinationMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
+import jabs.network.networks.sharded.ShardLoadTracker;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.simulator.event.AccountLockingEvent;
@@ -20,6 +21,7 @@ import jabs.ledgerdata.pbft.PBFTBlock;
 
 public class ClientLedCrossShardConsensus implements CrossShardConsensus {
 
+    private int ShardLoad = 0;
     private PBFTShardedNode node;
     // data structure for tracking locked accounts
     private ArrayList<EthereumAccount> lockedAccounts = new ArrayList<EthereumAccount>();
@@ -38,13 +40,18 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private HashMap<String, Integer> crossShardTransactionCount = new HashMap<>();
     private int clientCrossShardTransactions;
     private ThresholdMigrationPolicy migrationPolicy;
+    private ShardLoadTracker shardLoadTracker = new ShardLoadTracker();
+    private MigrationOfExistingAccounts existingAccountsMigration;
+    private int[] CrossShardVector;
+    
 
     public ClientLedCrossShardConsensus(PBFTShardedNode node) {
         this.node = node;
         this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
         this.network = (PBFTShardedNetwork) node.getNetwork();
         this.clientCrossShardTransactions = 0;
-        this.migrationPolicy = new ThresholdMigrationPolicy(3, this.network, accountsInMigration, this.node); // migration policy called and set
+        this.migrationPolicy = new ThresholdMigrationPolicy(30000, this.network, accountsInMigration, this.node); // migration policy called and set
+        this.existingAccountsMigration = new MigrationOfExistingAccounts(shardLoadTracker, this.network);
     }
 
     public void setID(int ID){
@@ -206,19 +213,31 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                         node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
                     }
                 }
+                 // declare the vector array with the size of the number of shards
+                int[] CrossShardVector = new int[((PBFTShardedNetwork)this.network).getNumberOfShards()];
                   // Check for migration
                 int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
-            for (EthereumAccount account : tx.getReceivers()) {
-                int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(account);
-               
-                //this is just for detection whether we on crossshard or not
-                // if crossshard, migrate
-                if (senderShard != receiverShard && ((PBFTShardedNetwork)this.network).migrate() == true) {
-                    migrationPolicy.migrateIfNecessary(account, tx.getReceiver(),tx.getSender(), crossShardTransactionCount);
-                } else {
-                    System.out.println("Intra shard DETECTED, No need to migrate");
-                    } 
-                    
+                for (EthereumAccount account : tx.getReceivers()) {
+                    int receiverShard = ((PBFTShardedNetwork) this.network).getAccountShard(account);
+                    //this is just for detection whether we on crossshard or not
+                    // if crossshard, migrate
+                    if (senderShard != receiverShard && ((PBFTShardedNetwork)this.network).migrate() == true) {
+                        // Add a load to the used shard
+                        int senderShardLoad = shardLoadTracker.getLoad(senderShard);
+                        shardLoadTracker.addShard(senderShardLoad, ShardLoad + 1);
+                        // Add a load to the used shard // this keeps track of how many times the shards are interacting
+                        int receiverShardLoad = shardLoadTracker.getLoad(receiverShard);
+                        shardLoadTracker.addShard(receiverShardLoad, ShardLoad + 1);
+                        migrationPolicy.migrateIfNecessary(account, tx.getReceiver(),tx.getSender(), crossShardTransactionCount); // policy 1 ( data structure)
+                        boolean migrate_mainshard = existingAccountsMigration.shouldMigrate(account, CrossShardVector, senderShard); // policy 2, if mainshard has less load balance, return true
+                        if(migrate_mainshard == true) { // migrate to main shard                                       // main shard accounts                                                                    // sender account to be migrated     
+                            migrationPolicy.migrateAccount(account, ((PBFTShardedNetwork)this.network).getAccountByShardNumber(shardLoadTracker.getLeastLoadedShard()), account);
+            
+                        }
+                    } else {
+                        System.out.println("Intra shard DETECTED, No need to migrate");
+                        } 
+                        
                 }
             }
         }

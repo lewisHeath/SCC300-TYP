@@ -1,50 +1,31 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
-# Import the data client led
-df_32_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-32s10n800c.csv')
+# Load the data
+df = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-16s10n800c.csv')
 
-def count_cross_shard_transactions(df):
-    cross_shard_count = df['CrossShard Transactions'].value_counts().sort_index().reset_index()
-    non_cross_shard_count = df['IntraShard Transactions'].value_counts().sort_index().reset_index()
-    return cross_shard_count, non_cross_shard_count
 
-all_dataframes = [df_32_shard_clientled]
+# Plotting
+plt.figure(figsize=(10, 6))
 
-cross_shard_counts = []
-non_cross_shard_counts = []
+# Plot cross-shard transactions
+plt.plot(df['Simulation Time'], df['CrossShard Transactions'], label='Cross-Shard Transactions', color='blue')
 
-for df in all_dataframes:
-    cross_shard_count, non_cross_shard_count = count_cross_shard_transactions(df)
-    cross_shard_counts.append(cross_shard_count)
-    non_cross_shard_counts.append(non_cross_shard_count)
+# Plot intra-shard transactions
+plt.plot(df['Simulation Time'], df['IntraShard Transactions'], label='Intra-Shard Transactions', color='green')
 
-labels = ['32']
-x = np.arange(len(labels))
-width = 0.50
+# Mark migration points based on migration count
+migration_points = df[df['Migration Count'] > 0]
+plt.scatter(migration_points['Simulation Time'], migration_points['CrossShard Transactions'], color='red', label='Migration Points')
 
-fig, ax = plt.subplots()
+# Set labels and title
+plt.xlabel('Simulation Time')
+plt.ylabel('Number of Transactions')
+plt.title('Cross-Shard and Intra-Shard Transactions over Time, with Main Shard policy')
+plt.legend()
 
-# Bar plots for CrossShard Transactions
-rects1 = ax.bar(range(len(cross_shard_counts[0])), cross_shard_counts[0]['CrossShard Transactions'], width, label='CrossShard Transactions')
-
-# Bar plots for IntraShard Transactions
-rects2 = ax.bar(np.arange(len(non_cross_shard_counts[0])) + width, non_cross_shard_counts[0]['IntraShard Transactions'], width, label='IntraShard Transactions')
-
-ax.set_ylabel('Transactions')
-ax.set_xlabel('Simulation Time')
-ax.set_title('Cross Shard vs Non-Cross Shard Transactions ( client led )')
-ax.set_xticks(x)
-ax.set_xticklabels(labels)
-ax.legend()
-
-# Remove the numbers on top of each bar
-def autolabel(rects):
-    pass
-
-autolabel(rects1)
-autolabel(rects2)
-
-fig.tight_layout()
+# Show plot
+plt.grid(True)
+plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+plt.tight_layout()  # Adjust layout to prevent overlapping labels
 plt.show()
