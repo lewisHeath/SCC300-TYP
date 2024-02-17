@@ -28,7 +28,7 @@ public class ThresholdMigrationPolicy implements MigrationPolicy {
     
 
     @Override
-public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver, EthereumAccount sender, Map<String, Integer> crossShardTransactionCount) {
+public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver, EthereumAccount sender, Map<String, Integer> crossShardTransactionCount, boolean activate) {
     // Get the unique identifier for the transaction involving both sender and receiver
     String transactionKey = sender.getShardNumber() + "-" + receiver.getShardNumber();
 
@@ -44,7 +44,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
     
     
     // Check if the migration threshold is reached for the current account
-    if (accountCrossShardCount >= migrationThreshold) {
+    if (accountCrossShardCount >= migrationThreshold && activate == true) {
         ((PBFTShardedNetwork)this.network).Policy = "Data Structure Policy";
         System.out.println("5555555555555555555555555555");
         System.out.println("Sender: " + sender.getShardNumber() + " Receiver :" + receiver.getShardNumber());
