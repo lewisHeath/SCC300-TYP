@@ -104,7 +104,7 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
     // If transaction history exceeds k blocks, remove transactions from the oldest block
     while (transactionHistory.size() > K) {
         transactionHistory.remove(0);
-        transactionHistory.remove(0); // Assuming each transaction adds two shard IDs (sender and receiver)
+        transactionHistory.remove(0); //each transaction adds two shards (sender and receiver)
     }
 }
 

@@ -13,7 +13,10 @@ public abstract class PBFTBlockVote<B extends Block<B>> extends Vote {
     public enum VoteType {
         PRE_PREPARE,
         PREPARE,
-        COMMIT
+        COMMIT,
+        MIGRATION_REQUEST,
+        MIGRATION_APPROVED,
+        MIGRATION_REJECTED
     }
 
     protected PBFTBlockVote(int size, Node voter, B block, VoteType voteType) {

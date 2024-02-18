@@ -57,7 +57,7 @@ public class Main {
         for(randomNum = 1; randomNum < 2; randomNum++){
             System.out.println("randomNum: " + randomNum);
             for(int i = 4, j = 6; i <= 4; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum,4, 5, clients[j], 1,180, "client", false);
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum,4, 5, clients[j], 1,50, "client", false);
                 // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
                 scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
                 scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
@@ -76,7 +76,7 @@ public class Main {
           for(randomNum = 1; randomNum < 2; randomNum++){
               System.out.println("randomNum: " + randomNum);
               for(int i =4, j = 6; i <= 4; i = i * 2, j++) {
-                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 4, 5, clients[j], 1, 180, "client", true);
+                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 4, 5, clients[j], 1, 50, "client", true);
                   // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
                   scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
                   scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
