@@ -68,9 +68,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         this.region = nodeDistribution.sampleRegion();
         // add accounts
-        this.generateAccounts(100);
+        this.generateAccounts(1000);
         this.clientLed = clientLed;
-        this.generateCDF(1.8);
+        this.generateCDF(1.9);
         this.migration = migration;
     }
 

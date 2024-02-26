@@ -7,7 +7,7 @@ import jabs.simulator.event.Event;
 import jabs.simulator.event.MigrationEvent;
 
 public class MigrationLogger extends AbstractCSVLogger {
-    // Add any additional fields or methods specific to migration logging
+   
 
     public MigrationLogger(Writer writer) {
         super(writer);
@@ -26,21 +26,18 @@ public class MigrationLogger extends AbstractCSVLogger {
  
     @Override
     protected boolean csvOutputConditionAfterEvent(Event event) {
-        // Add conditions to determine if migration should be logged after an event
-        // For example, return true if the event is related to migration
+        
         return event instanceof MigrationEvent;
     }
 
     @Override
     protected boolean csvOutputConditionFinalPerNode() {
-        // Add conditions to determine if migration should be logged finally per node
-        // For example, return true if you want to summarize migration data per node
+        
         return true;
     }
 
     @Override
     protected String[] csvHeaderOutput() {
-        // Define the header for migration logging
         return new String[]{"CrossShard Transactions" , "IntraShard Transactions" , "Simulation Time", "Migration Count"};
     }
 

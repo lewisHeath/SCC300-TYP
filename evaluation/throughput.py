@@ -39,53 +39,23 @@ def process_csv(df, nameOfFile):
     return df, average_latency
 
 
-df_1_shard = pd.read_csv('../output/old/GlobalStats-CommittedLogger-Clientled-1s10n100c.csv')
+df_1_shard = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv')
 # client led
-df_2_shard_clientled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Clientled-2s64n500c.csv')
-df_4_shard_clientled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Clientled-4s32n500c.csv')
-df_6_shard_clientled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Clientled-6s22n500c.csv')
-df_8_shard_clientled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Clientled-8s16n500c.csv')
-df_16_shard_clientled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Clientled-16s8n500c.csv')
-df_32_shard_clientled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Clientled-32s4n500c.csv')
-
-# shard led
-df_2_shard_shardled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Shardled-2s64n500c.csv')
-df_4_shard_shardled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Shardled-4s32n500c.csv')
-df_6_shard_shardled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Shardled-6s22n500c.csv')
-df_8_shard_shardled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Shardled-8s16n500c.csv')
-df_16_shard_shardled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Shardled-16s8n500c.csv')
-df_32_shard_shardled = pd.read_csv('../output/old/3_20GlobalSettings-CommittedLogger-Shardled-32s4n500c.csv')
+df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv')
+df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv')
+df_6_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-5s10n800c.csv')
 
 
 # process the data
 df_2_shard_clientled, df_2_shard_clientled_latency = process_csv(df_2_shard_clientled, '2_shard_clientled')
 df_4_shard_clientled, df_4_shard_clientled_latency = process_csv(df_4_shard_clientled, '4_shard_clientled')
-df_6_shard_clientled, df_6_shard_clientled_latency = process_csv(df_6_shard_clientled, '6_shard_clientled')
-df_8_shard_clientled, df_8_shard_clientled_latency = process_csv(df_8_shard_clientled, '8_shard_clientled')
-df_16_shard_clientled, df_16_shard_clientled_latency = process_csv(df_16_shard_clientled, '16_shard_clientled')
-df_32_shard_clientled, df_32_shard_clientled_latency = process_csv(df_32_shard_clientled, '32_shard_clientled')
-df_2_shard_shardled, df_2_shard_shardled_latency = process_csv(df_2_shard_shardled, '2_shard_shardled')
-df_4_shard_shardled, df_4_shard_shardled_latency = process_csv(df_4_shard_shardled, '4_shard_shardled')
-df_6_shard_shardled, df_6_shard_shardled_latency = process_csv(df_6_shard_shardled, '6_shard_shardled')
-df_8_shard_shardled, df_8_shard_shardled_latency = process_csv(df_8_shard_shardled, '8_shard_shardled')
-df_16_shard_shardled, df_16_shard_shardled_latency = process_csv(df_16_shard_shardled, '16_shard_shardled')
-df_32_shard_shardled, df_32_shard_shardled_latency = process_csv(df_32_shard_shardled, '32_shard_shardled')
-
+df_6_shard_clientled, df_6_shard_clientled_latency = process_csv(df_6_shard_clientled, '5_shard_clientled')
 
 fig, ax = plt.subplots()
 
 ax.plot(df_2_shard_clientled['Time'], df_2_shard_clientled['CumulativeCommittedTxs'], label='2 Shard Clientled')
 ax.plot(df_4_shard_clientled['Time'], df_4_shard_clientled['CumulativeCommittedTxs'], label='4 Shard Clientled')
-ax.plot(df_6_shard_clientled['Time'], df_6_shard_clientled['CumulativeCommittedTxs'], label='6 Shard Clientled')
-ax.plot(df_8_shard_clientled['Time'], df_8_shard_clientled['CumulativeCommittedTxs'], label='8 Shard Clientled')
-ax.plot(df_16_shard_clientled['Time'], df_16_shard_clientled['CumulativeCommittedTxs'], label='16 Shard Clientled')
-ax.plot(df_32_shard_clientled['Time'], df_32_shard_clientled['CumulativeCommittedTxs'], label='32 Shard Clientled')
-ax.plot(df_2_shard_shardled['Time'], df_2_shard_shardled['CumulativeCommittedTxs'], label='2 Shard Shardled', linestyle='dashed')
-ax.plot(df_4_shard_shardled['Time'], df_4_shard_shardled['CumulativeCommittedTxs'], label='4 Shard Shardled', linestyle='dashed')
-ax.plot(df_6_shard_shardled['Time'], df_6_shard_shardled['CumulativeCommittedTxs'], label='6 Shard Shardled', linestyle='dashed')
-ax.plot(df_8_shard_shardled['Time'], df_8_shard_shardled['CumulativeCommittedTxs'], label='8 Shard Shardled', linestyle='dashed')
-ax.plot(df_16_shard_shardled['Time'], df_16_shard_shardled['CumulativeCommittedTxs'], label='16 Shard Shardled', linestyle='dashed')
-ax.plot(df_32_shard_shardled['Time'], df_32_shard_shardled['CumulativeCommittedTxs'], label='32 Shard Shardled', linestyle='dashed')
+ax.plot(df_6_shard_clientled['Time'], df_6_shard_clientled['CumulativeCommittedTxs'], label='5 Shard Clientled')
 
 
 
@@ -127,9 +97,8 @@ ax.legend()
 # plt.show()
 
 # Prepare data for plotting
-shard_counts = np.array([2, 4, 6, 8, 16, 32])
-clientled_latencies = np.array([df_2_shard_clientled_latency, df_4_shard_clientled_latency, df_6_shard_clientled_latency, df_8_shard_clientled_latency, df_16_shard_clientled_latency, df_32_shard_clientled_latency])
-shardled_latencies = np.array([df_2_shard_shardled_latency, df_4_shard_shardled_latency, df_6_shard_shardled_latency, df_8_shard_shardled_latency, df_16_shard_shardled_latency, df_32_shard_shardled_latency])
+shard_counts = np.array([2, 4, 6])
+clientled_latencies = np.array([df_2_shard_clientled_latency, df_4_shard_clientled_latency, df_6_shard_clientled_latency])
 
 # Set up plot
 fig, ax = plt.subplots()
@@ -138,7 +107,7 @@ x = np.arange(len(shard_counts))
 
 # Plot bars side by side
 ax.bar(x - width/2, clientled_latencies, width, label='Client-led')
-ax.bar(x + width/2, shardled_latencies, width, label='Shard-led')
+
 
 # Set labels and title
 ax.set_xticks(x)
@@ -158,10 +127,7 @@ data = {'Configuration': ['2 Shards Clientled', '4 Shards Clientled', '6 Shards 
                           '8 Shards Clientled', '16 Shards Clientled', '32 Shards Clientled',
                           '2 Shards Shardled', '4 Shards Shardled', '6 Shards Shardled',
                           '8 Shards Shardled', '16 Shards Shardled', '32 Shards Shardled'],
-        'Latency': [df_2_shard_clientled_latency, df_4_shard_clientled_latency, df_6_shard_clientled_latency,
-                    df_8_shard_clientled_latency, df_16_shard_clientled_latency, df_32_shard_clientled_latency,
-                    df_2_shard_shardled_latency, df_4_shard_shardled_latency, df_6_shard_shardled_latency,
-                    df_8_shard_shardled_latency, df_16_shard_shardled_latency, df_32_shard_shardled_latency]}
+        'Latency': [df_2_shard_clientled_latency, df_4_shard_clientled_latency, df_6_shard_clientled_latency]}
 
 
 summary_table = pd.DataFrame(data)
@@ -183,16 +149,7 @@ def calculate_total_transactions_and_tps(df):
 
 total_transactions_and_tps = [calculate_total_transactions_and_tps(df) for df in [df_2_shard_clientled,
                                                                                   df_4_shard_clientled,
-                                                                                  df_6_shard_clientled,
-                                                                                  df_8_shard_clientled,
-                                                                                  df_16_shard_clientled,
-                                                                                  df_32_shard_clientled,
-                                                                                  df_2_shard_shardled,
-                                                                                  df_4_shard_shardled,
-                                                                                  df_6_shard_shardled,
-                                                                                  df_8_shard_shardled,
-                                                                                  df_16_shard_shardled,
-                                                                                  df_32_shard_shardled]]
+                                                                                  df_6_shard_clientled]]
 
 
 data['Total Transactions'] = [vals[0] for vals in total_transactions_and_tps]

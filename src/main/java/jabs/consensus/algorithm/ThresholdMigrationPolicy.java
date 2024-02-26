@@ -40,8 +40,6 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
     System.out.println("receiver : " + receiver);
     System.out.println("sender :" + sender);
     System.out.println("Current cross-shard count: " + accountCrossShardCount);
-
-    
     
     // Check if the migration threshold is reached for the current account
     if (accountCrossShardCount >= migrationThreshold && activate == true) {

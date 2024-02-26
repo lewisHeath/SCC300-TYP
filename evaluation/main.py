@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-df = pd.read_csv('../output/sharded-pbft-block-log.csv')
+df = pd.read_csv('output/sharded-pbft-block-log.csv')
 # this data contains the event from where a block was added to a chain, it has the node id that is emitting the event and the block creator and shard number
 # we only want the data where the node id is the same as the block creator
 df = df[df['NodeID'] == df['BlockCreator']]
