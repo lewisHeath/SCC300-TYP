@@ -52,6 +52,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int MigrationCounts = 0;
     public boolean migration;
     public String Policy = "";
+    public int accountsNumber = 10000; // set accounts here
    
    
 
@@ -68,7 +69,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         this.region = nodeDistribution.sampleRegion();
         // add accounts
-        this.generateAccounts(1000);
+        this.generateAccounts(accountsNumber);
         this.clientLed = clientLed;
         this.generateCDF(1.9);
         this.migration = migration;

@@ -110,19 +110,19 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
         }
     }
 
-    // Method to remove a transaction from the alignment vector
+    // Method to remove transaction data from the alignment vector
     private void removeTransactionFromAlignmentVector(EthereumAccount senderAccount, EthereumAccount receiverAccount, EthereumAccount[][] alignmentVector) {
-        int senderShard = senderAccount.getShardNumber();
-        int receiverShard = receiverAccount.getShardNumber();
+        int sender = senderAccount.getAccountNumber();
+        int receiver = receiverAccount.getAccountNumber();
         
         // remove alignment for sender's shard
-        if (alignmentVector[senderShard] != null && alignmentVector[senderShard].length > receiverShard) {
-            alignmentVector[senderShard][receiverShard] = null;
+        if (alignmentVector[sender] != null && alignmentVector[sender].length > receiver) {
+            alignmentVector[sender][receiver] = null;
         }
         
         // remove alignment for receiver's shard
-        if (alignmentVector[receiverShard] != null && alignmentVector[receiverShard].length > senderShard) {
-            alignmentVector[receiverShard][senderShard] = null;
+        if (alignmentVector[receiver] != null && alignmentVector[receiver].length > sender) {
+            alignmentVector[receiver][sender] = null;
         }
     }
     

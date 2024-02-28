@@ -56,8 +56,8 @@ public class Main {
         int randomNum = 1;
         for(randomNum = 1; randomNum < 2; randomNum++){
             System.out.println("randomNum: " + randomNum);
-            for(int i = 5, j = 6; i <= 5; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum,5, 5, clients[j], 1,30, "client", false);
+            for(int i = 2, j = 5; i <= 2; i = i * 2, j++) {
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum,2, 5, clients[j], 1,166, "client", false);
                 // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
                 scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
                 scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
@@ -75,8 +75,8 @@ public class Main {
           randomNum = 1;
           for(randomNum = 1; randomNum < 2; randomNum++){
               System.out.println("randomNum: " + randomNum);
-              for(int i =5, j = 6; i <= 5; i = i * 2, j++) {
-                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 5, 5, clients[j], 1, 30, "client", true);
+              for(int i =2, j = 6; i <= 2; i = i * 2, j++) {
+                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 2, 5, clients[j], 1, 166, "client", true);
                   // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
                   scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
                   scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent1.2/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));

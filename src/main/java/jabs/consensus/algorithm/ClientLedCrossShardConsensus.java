@@ -187,19 +187,11 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         ArrayList<EthereumTx> transactions = block.getTransactions();
     
         // Initialize crossShardVector dynamically
-        int maxAccountNumber = 0;
-        int maxShardNumber = 0;
-        for (EthereumTx tx : transactions) {
-            EthereumAccount sender = tx.getSender();
-            maxAccountNumber = Math.max(maxAccountNumber, sender.getAccountNumber());
-            maxShardNumber = Math.max(maxShardNumber, sender.getShardNumber());
-            for (EthereumAccount receiver : tx.getReceivers()) {
-                maxAccountNumber = Math.max(maxAccountNumber, receiver.getAccountNumber());
-                maxShardNumber = Math.max(maxShardNumber, receiver.getShardNumber());
-            }
-        }
+        int maxAccountNumber = ((PBFTShardedNetwork)this.network).accountsNumber;
+        int maxShardNumber = ((PBFTShardedNetwork)this.network).getNumberOfShards();
+        
         EthereumAccount[][] crossShardVector = new EthereumAccount[maxAccountNumber + 1][maxShardNumber + 1];
-    
+
         // Update transaction history and process transactions
         for (EthereumTx tx : transactions) {
             // Update cross-shard transaction count for involved accounts

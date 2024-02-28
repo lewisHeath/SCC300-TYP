@@ -2,11 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the without migration data to count its number of rows
-df_without_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-WithoutMigrations-5s10n800c.csv')
+df_without_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-WithoutMigrations-2s10n800c.csv')
 num_rows_without_migration = len(df_without_migration)
 
 # Load the migration data
-df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-5s10n800c.csv')
+df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-2s10n800c.csv')
 
 # Add empty rows to the migration data to match the number of rows in the without migration data
 num_rows_to_add = num_rows_without_migration - len(df_migration)
