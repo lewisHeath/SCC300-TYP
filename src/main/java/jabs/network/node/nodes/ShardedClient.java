@@ -125,6 +125,7 @@ public class ShardedClient extends Node{
         for (int i = 0; i < numAccounts; i++) {
             EthereumAccount account = ((PBFTShardedNetwork) network).getRandomAccount(true);
             accounts.add(account);
+            System.out.println("ACCOUNT ***********:" + account + " with Shard :" + ((PBFTShardedNetwork)this.network).getAccountShard(account));    
         }
 
           // set sender and receiver(s)
@@ -135,7 +136,9 @@ public class ShardedClient extends Node{
          // tx.setReceiver1(accounts.get(0)); // this is for migration
 
         txs.add(tx);
-        int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
+        System.out.println("siiiiiiiize : "+((PBFTShardedNetwork) this.network).accountToShard.size());
+        System.out.println("SENDER :"  + tx.getSender());
+        int senderShard = tx.getSender().getShardNumber();
         
         // check if the sender shard is not the same as ANY of the receiver shards
         boolean crossShard = false;
@@ -155,6 +158,7 @@ public class ShardedClient extends Node{
         if (crossShard){      
           //  migrationPolicy.migrateIfNecessary(tx.getReceiver(), tx.getReceiver(),tx.getSender(), crossShardTransactionCount);
             // print the shards involved in the transaction
+            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(senderShard, 1);
             System.out.println("CrossShard Transaction occuring....");
             System.out.println("Sender shard: " + senderShard);
             for (int i = 0; i < tx.getReceivers().size(); i++) {
@@ -178,6 +182,7 @@ public class ShardedClient extends Node{
             MigrationEvent event2 = new MigrationEvent(this.simulator.getSimulationTime(), null, senderShard, senderShard, 0, ((PBFTShardedNetwork) this.network).clientCrossShardTransactions , ((PBFTShardedNetwork) this.network).clientIntraShardTransactions,((PBFTShardedNetwork) this.network).committedTransactions, 0);
             this.simulator.putEvent(event2, 0);
             } else {
+            // intra-Shard
             System.out.println("IntraShard Transaction occuring....");
             ((PBFTShardedNetwork) this.network).clientIntraShardTransactions++;
             this.intraShardTxCommitCount.put(tx, 0);
@@ -204,7 +209,8 @@ public class ShardedClient extends Node{
         // send to at least f + 1 nodes in the shard
         // int f = ((PBFTShardedNetwork) this.network).getF();
         tx.setCreationTime(this.simulator.getSimulationTime());
-
+      //  ((PBFTShardedNetwork) this.network).shardLoadTracker.updateLoad(shard, 1); // increase shard load
+     
         ArrayList<PBFTShardedNode> nodes = ((PBFTShardedNetwork) this.network).getAllNodesFromShard(shard);
         for(Node node : nodes){
             this.networkInterface.addToUpLinkQueue(
@@ -216,5 +222,6 @@ public class ShardedClient extends Node{
 
     private void sendCrossShardTransaction(EthereumTx tx) {
         this.protocol.sendTransaction(tx); // send tx
+        
     }
 }

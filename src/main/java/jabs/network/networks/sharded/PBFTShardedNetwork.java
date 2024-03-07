@@ -16,6 +16,7 @@ import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.network.networks.Network;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.ShardedClient;
+import jabs.network.node.nodes.ethereum.EthereumNode;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.stats.NodeGlobalRegionDistribution;
 import jabs.network.stats.eightysixcountries.EightySixCountries;
@@ -53,12 +54,14 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public boolean migration;
     public String Policy = "";
     public int accountsNumber = 10000; // set accounts here
-   
+    public ArrayList <EthereumAccount> unAccounts = new ArrayList<>();   
+    public ShardLoadTracker shardLoadTracker = new ShardLoadTracker();
+    public boolean newAccountMigration = false;
    
 
     
     
-    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration) {
+    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration, boolean newAccountMigration) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
@@ -68,11 +71,13 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.clients = new ArrayList<ShardedClient>();
         this.nodeDistribution = new EthereumNodeGlobalNetworkStats86Countries(randomnessEngine);
         this.region = nodeDistribution.sampleRegion();
+        this.newAccountMigration = newAccountMigration;
         // add accounts
-        this.generateAccounts(accountsNumber);
+        this.generateAccounts(accountsNumber, newAccountMigration);
         this.clientLed = clientLed;
-        this.generateCDF(1.9);
+        this.generateCDF(1.8);
         this.migration = migration;
+       
     }
 
     private void generateCDF(double exponent) {
@@ -119,12 +124,15 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (int i = 0; i < numberOfShards; i++){
             // initialise shard
             shards.add(i, new ArrayList<PBFTShardedNode>());
+            System.out.println("********************");
+            shardLoadTracker.addShard(i, 0); // initializing shard tracker
             // add j nodes to shard i
             for (int j = nodesPerShard * i; j < nodesPerShard * (i + 1); j++){
                 // add the node to the network
                 this.addNode(createNewPBFTShardedNode(simulator, j, nodesPerShard, i));
                 // adding that node to the shard
                 shards.get(i).add((PBFTShardedNode)this.getNode(j));
+               
             }
         }
         // connect each node to its sharded p2p connections
@@ -145,21 +153,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (ShardedClient client : this.clients) {
             client.getP2pConnections().connectToNetwork(this);
         }
-
-        // tell each node in each shard which accounts are in their shard
-        for (int i = 0; i < numberOfShards; i++){
-            for (int j = 0; j < shards.get(i).size(); j++){
-                shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
-            }
-        }
-
-        // tell each nodes cross shard consensus protocol what their ID is
-        for (int i = 0; i < numberOfShards; i++) {
-            for (int j = 0; j < shards.get(i).size(); j++) {
-                shards.get(i).get(j).getCrossShardConsensus().setID(j);
-            }
-        }
     }
+
+       
 
     /**
      * @param node A PBFT node to add to the network
@@ -184,13 +180,32 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         } return -1;
     }
 
-    private void generateAccounts(int numOfAccounts) {
-        // generate lots of random ethereum accounts
+    private void generateAccounts(int numOfAccounts, boolean newAccountMigration) {
+       
+        if(newAccountMigration){ // new Account migration logic for generating accounts
+            // Generate lots of random Ethereum accounts
+            for (int i = 0; i < numOfAccounts; i++) {
+                // Generate random shard number
+                int shardNumber = getRandom().nextInt(numberOfShards);
+                EthereumAccount account = new EthereumAccount(i);
+                    // Add the account to the network
+                /*  this.addAccount(account, shardNumber);
+                    // Assign the account to the corresponding shard in shardToAccounts
+                    ArrayList<EthereumAccount> shardAccounts = this.shardToAccounts.get(shardNumber);
+                    shardAccounts.add(account);*/
+                // this.addAccount(account, null); 
+                account.Uniassigned(false);
+                this.unAccounts.add(account);
+            }   
+        }
+        else{
+             // generate lots of random ethereum accounts
         for(int i = 0; i < numOfAccounts; i++){
             // generate random shard number
             int shardNumber = this.getRandom().nextInt(numberOfShards);
-            EthereumAccount account = new EthereumAccount(shardNumber, i);
+            EthereumAccount account = new EthereumAccount(i);
             // add the account to the network
+            account.SetShard(shardNumber);
             this.addAccount(account, shardNumber);
             if(this.shardToAccounts.get(shardNumber) == null) {
                 this.shardToAccounts.put(shardNumber, new ArrayList<EthereumAccount>());
@@ -200,8 +215,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for(int i = 0; i < this.shardToAccounts.size(); i++){
             System.out.println("size of shard(" + i + ") in generateAccounts() method: " + this.shardToAccounts.get(i).size());
         }
+        }
     }
-
+    
     public void addAccount(EthereumAccount account, int shardNumber) {
         // add the account to the shard
         this.accountToShard.put(account, shardNumber);
@@ -212,27 +228,75 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     }
 
     public EthereumAccount getRandomAccount(Boolean use_cdf) {
-        // get a random account from the network
-        // Generate a random number between 0 and 1
-        double randomNumber = this.randomnessEngine.nextDouble();
 
-        // Find the corresponding value of the random number in the CDF
-        int index = 0;
-        for (int i = 0; i < cdf.size(); i++) {
-            if (randomNumber <= cdf.get(i)) {
-                index = i;
-                break;
+        if(newAccountMigration){ // if new account migration set true, logic/// get an account and assign it to the least loaded shard
+            EthereumAccount account = null;
+            double randomNumber = this.randomnessEngine.nextDouble();
+            int index = 0;
+            for (int i = 0; i < cdf.size(); i++) { // get a random index to get an account from the datastructure 
+                if (randomNumber <= cdf.get(i)) {
+                    index = i;
+                    break;
+                }
             }
+            // First, try to select an unassigned account
+            if (!unAccounts.isEmpty()) {
+                int randomIndex = this.randomnessEngine.nextInt(unAccounts.size());
+                account = unAccounts.get(randomIndex);
+                //unAccounts.remove(randomIndex); // Remove the selected account from the unassigned listt
+                // Assign to the least loaded shard
+                if(!account.isAssigned){
+                    assignAccountToShard(account);
+                }
+            }else if (use_cdf && !cdf.isEmpty()) { // this isn't called for currently, as its very rarely for this condition to meet
+                // Fallback to CDF-based selection if there are no unassigned accounts
+                account = (EthereumAccount) accountToShard.keySet().toArray()[index];
+                if(account.isAssigned == false){
+                    this.addAccount(account, shardLoadTracker.getLeastLoadedShard());
+                }
+            }
+            //debuugg 
+            System.out.println("siiiiiiiize ****************** : "+ accountToShard.size() );
+            System.out.println(account);
+            System.out.println("SENDER *********************** : "+ account + "Shard :" + account.getShardNumber());
+            return account;
         }
-        if(use_cdf) {
-            return (EthereumAccount) accountToShard.keySet().toArray()[index];
-        }
-        int randomInt = this.randomnessEngine.nextInt(this.accountToShard.size());
-
-        // int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
-        return (EthereumAccount) accountToShard.keySet().toArray()[randomInt];
+        else{ // the normal account getter process
+            // get a random account from the network
+            // Generate a random number between 0 and 1
+            double randomNumber = this.randomnessEngine.nextDouble();
+            // Find the corresponding value of the random number in the CDF
+            int index = 0;
+            for (int i = 0; i < cdf.size(); i++) {
+                if (randomNumber <= cdf.get(i)) {
+                    index = i;
+                    break;
+                }
+            }
+            if(use_cdf) {
+                return (EthereumAccount) accountToShard.keySet().toArray()[index];
+            }
+            int randomInt = this.randomnessEngine.nextInt(this.accountToShard.size());
+            // int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());
+            return (EthereumAccount) accountToShard.keySet().toArray()[randomInt];
+            }
     }
-
+    
+    private void assignAccountToShard(EthereumAccount account) {
+        account.Uniassigned(true); // assign is set to true, to flag that the account has a shard
+        int leastLoadedShard = shardLoadTracker.getLeastLoadedShard(); // get least loaded shard known
+        // Assign the account to a shard and update shardLoadTracker
+       // shardLoadTracker.updateLoad(leastLoadedShard, 1); // update the statee
+        if (this.shardToAccounts.get(leastLoadedShard) == null) { 
+            this.shardToAccounts.put(leastLoadedShard, new ArrayList<>());
+        }
+        System.out.println("least loaded shard :" + leastLoadedShard);
+        this.shardToAccounts.get(leastLoadedShard).add(account); 
+        this.accountToShard.put(account, leastLoadedShard); // Ensure account is added to accountToShard
+        account.SetShard(leastLoadedShard);
+    }
+    
+  
     public EthereumAccount getRandomAccountFromShard(int shardNumber) {
         // get a random account from the network
         int randomAccountIndex = this.getRandom().nextInt(accountToShard.size());

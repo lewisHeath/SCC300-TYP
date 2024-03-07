@@ -34,9 +34,9 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
             // Get the current shard of the account
             int currentShard = getCurrentShard(account);
     
-            // Get the alignment of the account towards its current shard and the main shard and checking if they are null
-        int alignmentToCurrentShard = (crossShardVector[currentShard] != null) ? crossShardVector[currentShard].length + 1 : 0;
-        int alignmentToMainShard = (crossShardVector[mainShard] != null) ? crossShardVector[mainShard].length + 1 : 0;
+                // Getting the alignment of the account towards its current shard and the main shard and checking if they are null
+            int alignmentToCurrentShard = (crossShardVector[currentShard] != null) ? crossShardVector[currentShard].length + 1 : 0;
+        //    int alignmentToMainShard = (crossShardVector[mainShard] != null) ? crossShardVector[mainShard].length + 1 : 0;
 
     
             // Calculate the sum of alignments towards other shards (excluding the current shard)

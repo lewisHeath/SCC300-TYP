@@ -259,11 +259,11 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         
         // Increment sender shard load
         int senderShardLoad = shardLoadTracker.getLoad(senderShard);
-        shardLoadTracker.addShard(senderShardLoad, 1);
+        shardLoadTracker.updateLoad(senderShardLoad, 1);
         
         // Increment receiver shard load
         int receiverShardLoad = shardLoadTracker.getLoad(receiverShard);
-        shardLoadTracker.addShard(receiverShardLoad, 1);
+        shardLoadTracker.updateLoad(receiverShardLoad, 1);
         
         // Execute migration for each receiver account
         for (EthereumAccount account : tx.getReceivers()) {

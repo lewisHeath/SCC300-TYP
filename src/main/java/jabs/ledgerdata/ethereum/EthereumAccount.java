@@ -8,16 +8,28 @@ public class EthereumAccount extends BasicData {
     private int accountNumber;
     private String hash;
     private boolean locked;
-    public EthereumAccount(int shard, int accountNumber) {
+    public boolean isAssigned = false;
+    public EthereumAccount( int accountNumber) {
         super(100);
-        this.shard = shard;
+       // this.shard = shard;
         this.balance = 0;
         this.accountNumber = accountNumber;
         this.locked = false;
+        this.isAssigned = false;
     }
 
     public int getShardNumber() {
         return shard;
+    }
+
+    public boolean isAssigned()
+    {
+        return isAssigned;
+    }
+
+    public void Uniassigned(boolean isAssigned)
+    {
+        this.isAssigned = isAssigned;
     }
 
     public int getAccountNumber() {
@@ -44,5 +56,10 @@ public class EthereumAccount extends BasicData {
         } else {
             return false;
         }
+    }
+
+    public void SetShard(int shard)
+    {
+        this.shard = shard;
     }
 }

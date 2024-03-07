@@ -41,7 +41,7 @@ def process_csv(df, nameOfFile):
 # import the data
 df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv')
 df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv')
-df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n800c.csv')
+df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/Clientled-CommittedLogger-10s10n800c.csv')
 
 
 
@@ -51,7 +51,7 @@ df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponen
 
 df_2_shard_clientled = process_csv(df_2_shard_clientled, '2 Shard Clientled')
 df_4_shard_clientled = process_csv(df_4_shard_clientled, '4 Shard Clientled')
-df_8_shard_clientled = process_csv(df_8_shard_clientled, '8 Shard Clientled')
+df_8_shard_clientled = process_csv(df_8_shard_clientled, '10 Shard Clientled')
 
 
 # Create a figure and axis object
@@ -61,7 +61,7 @@ fig, ax = plt.subplots()
 ax.plot(['Time'], ['CumulativeCommittedTxs'], label='1 Shard Clientled')
 ax.plot(df_2_shard_clientled['Time'], df_2_shard_clientled['CumulativeCommittedTxs'], label='2 Shards Clientled')
 ax.plot(df_4_shard_clientled['Time'], df_4_shard_clientled['CumulativeCommittedTxs'], label='4 Shards Clientled')
-ax.plot(df_8_shard_clientled['Time'], df_8_shard_clientled['CumulativeCommittedTxs'], label='8 Shards Clientled')
+ax.plot(df_8_shard_clientled['Time'], df_8_shard_clientled['CumulativeCommittedTxs'], label='10 Shards Clientled')
 
 # ax.plot(df_128_shard_clientled['Time'], df_128_shard_clientled['CumulativeCommittedTxs'], label='128 Shard Clientled')
 # ax.plot(df_256_shard_clientled['Time'], df_256_shard_clientled['CumulativeCommittedTxs'], label='256 Shard Clientled')
