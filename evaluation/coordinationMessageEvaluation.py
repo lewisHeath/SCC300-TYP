@@ -6,11 +6,12 @@ from matplotlib.ticker import FuncFormatter
 # client led
 
 
-df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/ClientledCoordinationMessageLogger-5s10n800c.csv')
-
+df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/with_Migration/exponent2.6/seed1/ClientledCoordinationMessageLogger-10s10n800c.csv')
+df_10_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/ClientledCoordinationMessageLogger-10s10n800c.csv')
 
 # client led
 print("Intra-shard-committed messages for 2 shard clientled: " + str(df_2_shard_clientled[df_2_shard_clientled['MessageType'] == 'intra-shard-committed'].shape[0]))
+#print("Intra-shard-committed messages for 10 shard clientled: " + str(df_10_shard_clientled[df_10_shard_clientled['MessageType'] == 'intra-shard-committed'].shape[1]))
 
 
 def plot_message_counts(dataframes, labels):
@@ -32,7 +33,7 @@ def plot_message_counts(dataframes, labels):
     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: '{:,.0f}'.format(x)))
     plt.show()
 
-dataframesClientled = [ df_2_shard_clientled]
+dataframesClientled = [ df_10_shard_clientled]
 
 
 

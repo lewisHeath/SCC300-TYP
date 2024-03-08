@@ -64,11 +64,11 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
             int shardLoad = entry.getValue(); // and get shard load
             // Calculate alignment based on shard load
             int alignment = 1 / shardLoad;
+           // System.out.println(alignment);
             // Adjust alignment based on transaction history / if shard have had many transactions,
             // increase the alignment as well
             int transactionsInShard = countTransactionsInShard(shardNumber); // get how many transactions were in the shard
-            alignment += transactionsInShard; // increase the alignment 
-            // Assign alignment vector for the shard
+            alignment += transactionsInShard; // increase the alignment  
             alignmentVector[shardNumber] = new EthereumAccount[alignment];
         }
     

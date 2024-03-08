@@ -29,6 +29,7 @@ public class ThresholdMigrationPolicy implements MigrationPolicy {
 
     @Override
 public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver, EthereumAccount sender, Map<String, Integer> crossShardTransactionCount, boolean activate) {
+    if(activate){
     // Get the unique identifier for the transaction involving both sender and receiver
     String transactionKey = sender.getShardNumber() + "-" + receiver.getShardNumber();
 
@@ -42,7 +43,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
     System.out.println("Current cross-shard count: " + accountCrossShardCount);
     
     // Check if the migration threshold is reached for the current account
-    if (accountCrossShardCount >= migrationThreshold && activate == true) {
+    if (accountCrossShardCount >= migrationThreshold) {
         ((PBFTShardedNetwork)this.network).Policy = "Data Structure Policy";
         System.out.println("5555555555555555555555555555");
         System.out.println("Sender: " + sender.getShardNumber() + " Receiver :" + receiver.getShardNumber());
@@ -50,6 +51,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
         // Reset the count after migration
         crossShardTransactionCount.put(transactionKey, 0);
     }
+}
 }
 
 
@@ -72,6 +74,7 @@ public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver
         MigrationEvent migrationEvent = new MigrationEvent(node.getSimulator().getSimulationTime(), currentAccount, currentAccount.getShardNumber(), receiverAccount.getShardNumber(),migrationThreshold,((PBFTShardedNetwork)this.network).clientCrossShardTransactions, ((PBFTShardedNetwork)this.network).clientIntraShardTransactions, ((PBFTShardedNetwork)this.network).committedTransactions,((PBFTShardedNetwork)network).MigrationCounts);
         // Put the migration event into the simulator's event queue
         node.getSimulator().putEvent(migrationEvent, 0);
+        currentAccount.MigrateStatus(true);
     }
 
 

@@ -40,7 +40,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private HashMap<String, Integer> crossShardTransactionCount = new HashMap<>();
     private int clientCrossShardTransactions;
     private ThresholdMigrationPolicy migrationPolicy;
-    private ShardLoadTracker shardLoadTracker = new ShardLoadTracker();
+   // private ShardLoadTracker shardLoadTracker;
     private MigrationOfExistingAccounts existingAccountsMigration;
     private EthereumAccount[][] CrossShardVector; // this is  the alinment vector
     private int PolicyUse = 1;
@@ -53,7 +53,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         this.network = (PBFTShardedNetwork) node.getNetwork();
         this.clientCrossShardTransactions = 0;
         this.migrationPolicy = new ThresholdMigrationPolicy(2, this.network, accountsInMigration, this.node); // migration policy called and set
-        this.existingAccountsMigration = new MigrationOfExistingAccounts(shardLoadTracker, this.network);
+        this.existingAccountsMigration = new MigrationOfExistingAccounts((((PBFTShardedNetwork)this.network).shardLoadTracker), this.network);
     }
 
     public void setID(int ID){
@@ -242,12 +242,13 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                         node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
                     }
                 }
-                if (sender != tx.getReceiver() && ((PBFTShardedNetwork)this.network).migration == true){
+                if (sender != tx.getReceiver() && ((PBFTShardedNetwork)this.network).migration == true && sender.haveMigrated() == false || ((PBFTShardedNetwork)this.network).mainshardMigration == true && sender.haveMigrated() == false && sender != tx.getReceiver()){
                     initiateMigration(tx);
                 }
             }
             // Update transaction history and initiate migration, and passing @crossShardVector with the new values
             existingAccountsMigration.updateTransactionHistory(transactions, crossShardVector);
+           // (((PBFTShardedNetwork)this.network).shardLoadTracker).updateLoad(senderShardNumber, 1);
         }
     }
     
@@ -255,30 +256,20 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private void executeMigration(EthereumTx tx, int receiverShard) {
         // Get the sender shard and initialize CrossShardVector
         int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
-        EthereumAccount[][] crossShardVector = new EthereumAccount[((PBFTShardedNetwork) this.network).getNumberOfShards()][];
-        
-        // Increment sender shard load
-        int senderShardLoad = shardLoadTracker.getLoad(senderShard);
-        shardLoadTracker.updateLoad(senderShardLoad, 1);
-        
-        // Increment receiver shard load
-        int receiverShardLoad = shardLoadTracker.getLoad(receiverShard);
-        shardLoadTracker.updateLoad(receiverShardLoad, 1);
-        
+        EthereumAccount[][] crossShardVector = new EthereumAccount[((PBFTShardedNetwork) this.network).getNumberOfShards()][];        
         // Execute migration for each receiver account
-        for (EthereumAccount account : tx.getReceivers()) {
-            // Perform migration if necessary
-            migrationPolicy.migrateIfNecessary(account, tx.getReceiver(), tx.getSender(), crossShardTransactionCount, true);
-            
+        // Perform migration if necessary
+        migrationPolicy.migrateIfNecessary(tx.getSender(), tx.getReceiver(), tx.getSender(), crossShardTransactionCount, ((PBFTShardedNetwork)this.network).migration);
+        if(((PBFTShardedNetwork)this.network).mainshardMigration == true){
             // Check if migration to main shard is needed
-            boolean migrateMainShard = existingAccountsMigration.shouldMigrate(account, crossShardVector, senderShard, true);
+            boolean migrateMainShard = existingAccountsMigration.shouldMigrate(tx.getReceiver(), crossShardVector, senderShard,  ((PBFTShardedNetwork)this.network).mainshardMigration);
             if (migrateMainShard) {
                 // Get the least loaded shard and migrate the account
-                int leastLoadedShard = shardLoadTracker.getLeastLoadedShard();
-                EthereumAccount leastLoadedAccount = ((PBFTShardedNetwork) this.network).getAccountByShardNumber(leastLoadedShard);
-                migrationPolicy.migrateAccount(account, leastLoadedAccount, account);
+                int leastLoadedShard = (((PBFTShardedNetwork)this.network).shardLoadTracker).getLeastLoadedShard();
+                EthereumAccount leastloadedShardAccount = ((PBFTShardedNetwork) this.network).getAccountByShardNumber(leastLoadedShard);
+                migrationPolicy.migrateAccount(tx.getReceiver(), leastloadedShardAccount, tx.getSender());
+                }
             }
-        }
     }
     
     

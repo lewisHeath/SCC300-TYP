@@ -44,7 +44,7 @@ public class ShardLoadTracker {
         if (leastLoad == -1) {
             
             leastLoadedShard = i;
-            i++;
+            
         }
     
         return leastLoadedShard;

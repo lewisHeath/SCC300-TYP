@@ -40,32 +40,32 @@ public class Main {
             for(int i = 128, j = 6; i <= 128; i = i * 2, j++) {
                 scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, i, 10, clients[j], 1, 60, "shard");
                 // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
-                scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.6/seed" + randomNum + "/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.6/seed" + randomNum + "/Shardled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.6/seed" + randomNum + "/Shardled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.6/seed" + randomNum + "/ShardledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.6/seed" + randomNum + "/ShardledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.6/seed" + randomNum + "/ShardledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.1/seed" + randomNum + "/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.1/seed" + randomNum + "/Shardled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.1/seed" + randomNum + "/Shardled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.1/seed" + randomNum + "/ShardledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.1/seed" + randomNum + "/ShardledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/shardled/exponent2.1/seed" + randomNum + "/ShardledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
                 scenario.run();
             }
         }
         */
-
+/* 
         // CLIENT LED SIMULATIONS WITH MIGRATION
 
         int randomNum = 1;
         for(randomNum = 1; randomNum < 2; randomNum++){
             System.out.println("randomNum: " + randomNum);
-            for(int i = 10, j = 6; i <= 10; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum,10, 5, clients[j], 1,160, "client", false, false);
+            for(int i = 8, j = 6; i <= 8; i = i * 2, j++) {
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum,8, 10, clients[j], 1,166, "client", false,false, false);
                 // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
-                scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/ClientledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/ClientledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/ClientledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                scenario.AddNewLogger(new WithoutMigrationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-WithoutMigrations-" + i + "s10n" + clients[j] + "c.csv"))); // Corrected file path
+                scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/Clientled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/ClientledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/ClientledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/ClientledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                scenario.AddNewLogger(new WithoutMigrationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.1/seed" + randomNum + "/Clientled-WithoutMigrations-" + i + "s10n" + clients[j] + "c.csv"))); // Corrected file path
                 scenario.run();
             }
         }
@@ -75,16 +75,51 @@ public class Main {
           randomNum = 1;
           for(randomNum = 1; randomNum < 2; randomNum++){
               System.out.println("randomNum: " + randomNum);
-              for(int i = 10, j = 6; i <= 10; i = i * 2, j++) {
-                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 10, 5, clients[j], 1, 160, "client", false, true);
+              for(int i = 8, j = 6; i <= 8; i = i * 2, j++) {
+                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 8, 10, clients[j], 1, 166, "client", true, false ,false);
                   // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
-                  scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                  scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                  scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                  scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/ClientledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                  scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/ClientledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                  scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/ClientledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
-                  scenario.AddNewLogger(new MigrationLogger(Paths.get("output/tenNodesSimulations/clientled/exponent2.6/seed" + randomNum + "/Clientled-Migrations-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/Clientled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/ClientledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/ClientledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/ClientledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new MigrationLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/exponent2.1/seed" + randomNum + "/Clientled-Migrations-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.run();
+              }
+          }
+*/
+          int randomNum = 1;
+          for(randomNum = 1; randomNum < 2; randomNum++){
+              System.out.println("randomNum: " + randomNum);
+              for(int i = 8, j = 6; i <= 8; i = i * 2, j++) {
+                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 8, 10, clients[j], 1, 166, "client", false, true , false);
+                  // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
+                  scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/Clientled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/ClientledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/ClientledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/ClientledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new MigrationLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/exponent2.1/seed" + randomNum + "/Clientled-Migrations-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.run();
+              }
+          }
+
+
+          randomNum = 1;
+          for(randomNum = 1; randomNum < 2; randomNum++){
+              System.out.println("randomNum: " + randomNum);
+              for(int i = 8, j = 6; i <= 8; i = i * 2, j++) {
+                  scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 8, 5, clients[j], 1, 166, "client", false, false , true);
+                  // System.out.println("output/tenNodesSimulations/shardled/10000accounts/Shardled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv");
+                  scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new TransactionAbortedLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/Clientled-AbortedLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new AccountLockingLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/ClientledAccountLockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new AccountUnlockingLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/ClientledAccountUnlockingLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new CoordinationMessagesLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/ClientledCoordinationMessageLogger-" + i + "s10n" + clients[j] + "c.csv")));
+                  scenario.AddNewLogger(new MigrationLogger(Paths.get("output/tenNodesSimulations/clientled/NewAccounts/exponent2.1/seed" + randomNum + "/Clientled-Migrations-" + i + "s10n" + clients[j] + "c.csv")));
                   scenario.run();
               }
           }

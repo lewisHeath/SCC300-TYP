@@ -9,6 +9,7 @@ public class EthereumAccount extends BasicData {
     private String hash;
     private boolean locked;
     public boolean isAssigned = false;
+    private boolean migrated = false;
     public EthereumAccount( int accountNumber) {
         super(100);
        // this.shard = shard;
@@ -20,6 +21,16 @@ public class EthereumAccount extends BasicData {
 
     public int getShardNumber() {
         return shard;
+    }
+
+    public void MigrateStatus(boolean migrated)
+    {
+        this.migrated = migrated;
+    }
+
+    public boolean haveMigrated()
+    {
+        return migrated;
     }
 
     public boolean isAssigned()

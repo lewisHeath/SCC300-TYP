@@ -53,15 +53,16 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public int MigrationCounts = 0;
     public boolean migration;
     public String Policy = "";
-    public int accountsNumber = 10000; // set accounts here
+    public int accountsNumber = 1000; // set accounts here
     public ArrayList <EthereumAccount> unAccounts = new ArrayList<>();   
     public ShardLoadTracker shardLoadTracker = new ShardLoadTracker();
     public boolean newAccountMigration = false;
+    public boolean mainshardMigration = false;
    
 
     
     
-    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration, boolean newAccountMigration) {
+    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration,boolean mainshardMigration, boolean newAccountMigration) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
@@ -75,8 +76,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // add accounts
         this.generateAccounts(accountsNumber, newAccountMigration);
         this.clientLed = clientLed;
-        this.generateCDF(1.8);
+        this.generateCDF(2.1);
         this.migration = migration;
+        this.mainshardMigration = mainshardMigration;
        
     }
 
@@ -124,8 +126,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         for (int i = 0; i < numberOfShards; i++){
             // initialise shard
             shards.add(i, new ArrayList<PBFTShardedNode>());
-            System.out.println("********************");
-            shardLoadTracker.addShard(i, 0); // initializing shard tracker
+           // System.out.println("********************");
+            shardLoadTracker.addShard(i, 1); // initializing shard tracker
             // add j nodes to shard i
             for (int j = nodesPerShard * i; j < nodesPerShard * (i + 1); j++){
                 // add the node to the network
@@ -152,6 +154,19 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // connect each client to the network
         for (ShardedClient client : this.clients) {
             client.getP2pConnections().connectToNetwork(this);
+        }
+         // tell each node in each shard which accounts are in their shard
+         for (int i = 0; i < numberOfShards; i++){
+            for (int j = 0; j < shards.get(i).size(); j++){
+                shards.get(i).get(j).setShardAccounts(this.shardToAccounts.get(i));
+            }
+        }
+
+        // tell each nodes cross shard consensus protocol what their ID is
+        for (int i = 0; i < numberOfShards; i++) {
+            for (int j = 0; j < shards.get(i).size(); j++) {
+                shards.get(i).get(j).getCrossShardConsensus().setID(j);
+            }
         }
     }
 
@@ -246,6 +261,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
                 //unAccounts.remove(randomIndex); // Remove the selected account from the unassigned listt
                 // Assign to the least loaded shard
                 if(!account.isAssigned){
+                   
                     assignAccountToShard(account);
                 }
             }else if (use_cdf && !cdf.isEmpty()) { // this isn't called for currently, as its very rarely for this condition to meet
@@ -285,8 +301,8 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     private void assignAccountToShard(EthereumAccount account) {
         account.Uniassigned(true); // assign is set to true, to flag that the account has a shard
         int leastLoadedShard = shardLoadTracker.getLeastLoadedShard(); // get least loaded shard known
+     //   shardLoadTracker.updateLoad(leastLoadedShard,1);
         // Assign the account to a shard and update shardLoadTracker
-       // shardLoadTracker.updateLoad(leastLoadedShard, 1); // update the statee
         if (this.shardToAccounts.get(leastLoadedShard) == null) { 
             this.shardToAccounts.put(leastLoadedShard, new ArrayList<>());
         }
@@ -294,6 +310,11 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         this.shardToAccounts.get(leastLoadedShard).add(account); 
         this.accountToShard.put(account, leastLoadedShard); // Ensure account is added to accountToShard
         account.SetShard(leastLoadedShard);
+        // Update shard accounts for each node in the shard
+        for (int j = 0; j < shards.get(leastLoadedShard).size(); j++) {
+            shards.get(leastLoadedShard).get(j).setShardAccounts(shardToAccounts.get(leastLoadedShard));
+        }
+
     }
     
   

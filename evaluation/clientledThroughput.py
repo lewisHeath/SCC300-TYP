@@ -40,8 +40,8 @@ def process_csv(df, nameOfFile):
 
 # import the data
 df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv')
-df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv')
-df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/Clientled-CommittedLogger-10s10n800c.csv')
+df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/Clientled-CommittedLogger-10s10n800c.csv')
+df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/with_Migration/exponent2.6/seed1/Clientled-CommittedLogger-10s10n800c.csv')
 
 
 
