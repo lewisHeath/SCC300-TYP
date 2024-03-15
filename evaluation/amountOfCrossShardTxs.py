@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the data
-df = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv')
+df = pd.read_csv('output/tenNodesSimulations/clientled/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv')
 
 
 # Plotting

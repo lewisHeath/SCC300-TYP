@@ -60,11 +60,11 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public boolean newAccountMigration = false;
     public boolean mainshardMigration = false;
     public ArrayList <Integer> shardsList = new ArrayList<>();
-    
+    public boolean newAccountMigration2 = false;
 
     
     
-    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration,boolean mainshardMigration, boolean newAccountMigration) {
+    public PBFTShardedNetwork(RandomnessEngine randomnessEngine, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs, boolean clientLed, boolean migration,boolean mainshardMigration, boolean newAccountMigration, boolean newAccountMigration2) {
         super(randomnessEngine, new GlobalNetworkStats86Countries(randomnessEngine));
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
@@ -78,9 +78,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // add accounts
         this.generateAccounts(accountsNumber, newAccountMigration);
         this.clientLed = clientLed;
-        this.generateCDF(1.6);
+        this.generateCDF(0.6);
         this.migration = migration;
         this.mainshardMigration = mainshardMigration;
+        this.newAccountMigration2 = newAccountMigration2;
        
     }
 
@@ -243,6 +244,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
     public void addAccount(EthereumAccount account, int shardNumber) {
         // add the account to the shard
         this.accountToShard.put(account, shardNumber);
+        //this.shardToAccounts.get(shardNumber).add(account);
     }
 
     public int getAccountShard(EthereumAccount account) {

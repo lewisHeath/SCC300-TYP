@@ -10,6 +10,7 @@ import jabs.consensus.algorithm.ClientLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.EdgeNodeProtocol;
 import jabs.consensus.algorithm.MigrationOfExistingAccounts;
 import jabs.consensus.algorithm.MigrationPolicy;
+import jabs.consensus.algorithm.PBFT;
 import jabs.consensus.algorithm.ShardLedEdgeNodeProtocol;
 import jabs.consensus.algorithm.ThresholdMigrationPolicy;
 import jabs.ledgerdata.Data;
@@ -27,6 +28,7 @@ import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.network.p2p.ShardedClientP2P;
 import jabs.simulator.Simulator;
 import jabs.simulator.event.MigrationEvent;
+import jabs.simulator.event.ShardloadEvent;
 import jabs.simulator.event.TransactionCommittedEvent;
 import jabs.simulator.event.TransactionCreationEvent;
 import jabs.simulator.event.TxGenerationProcessSingleNode;
@@ -140,7 +142,7 @@ public class ShardedClient extends Node{
         System.out.println("siiiiiiiize : "+((PBFTShardedNetwork) this.network).accountToShard.size());
         System.out.println("SENDER :"  + tx.getSender());
         int senderShard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()); // get sendershard N*
-        
+        EthereumAccount Sender = tx.getSender();
         // check if the sender shard is not the same as ANY of the receiver shards
         boolean crossShard = false;
         for (EthereumAccount account : tx.getReceivers()) {
@@ -148,9 +150,24 @@ public class ShardedClient extends Node{
             System.out.println("RECEIVER :"  + account + "With Shard "+ receiverShard);
             // increase the load of the receive shard,
             // this is supposed to prevent the next accounts to be in the same shard
-            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(receiverShard, 1);  
+            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(receiverShard, 1);
+            ShardloadEvent event = new ShardloadEvent(this.simulator.getSimulationTime(), receiverShard, ((PBFTShardedNetwork)this.network).shardLoadTracker.getLoad(receiverShard),0); 
+            this.simulator.putEvent(event, 0); // log the receiver shard updated load
             if (senderShard != receiverShard) {
-
+                if(((PBFTShardedNetwork)this.network).newAccountMigration2 == true){ // if new account migration is set to true
+                    if(((PBFTShardedNetwork)this.network).shardLoadTracker.getLoad(receiverShard) < ((PBFTShardedNetwork)this.network).shardLoadTracker.getLoad(senderShard)){ // if the receiver shard has less load than the sender shard, migrate the sender account to the receiver shard
+                        ((PBFTShardedNetwork)this.network).addAccount(Sender, receiverShard); // migrate the sender acc to the receiver shard
+                        Sender.SetShard(receiverShard);
+                        ((PBFTShardedNetwork)this.network).shardToAccounts.get(receiverShard).add(Sender); // adding sender account to the receiver shard
+                        ShardloadEvent event2 = new ShardloadEvent(this.simulator.getSimulationTime(), receiverShard, ((PBFTShardedNetwork)this.network).shardLoadTracker.getLoad(receiverShard),1); 
+                        this.simulator.putEvent(event2, 0); // log the receiver shard updated load
+                        break;  
+                    }
+                    else{
+                        crossShard = true;
+                        break;
+                    }
+                }
                 System.out.println("sedner "+ senderShard + " vs " + receiverShard);
                 crossShard = true;
                 break;
@@ -163,8 +180,12 @@ public class ShardedClient extends Node{
         if (crossShard){      
           //  migrationPolicy.migrateIfNecessary(tx.getReceiver(), tx.getReceiver(),tx.getSender(), crossShardTransactionCount);
             // print the shards involved in the transaction
-            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(senderShard, 2);
-            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(tx.getReceiver().getShardNumber(), 2);
+            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(senderShard, 1);
+            ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(tx.getReceiver().getShardNumber(), 1);
+            ShardloadEvent event1 = new ShardloadEvent(this.simulator.getSimulationTime(), senderShard, ((PBFTShardedNetwork)this.network).shardLoadTracker.getLoad(senderShard),0); 
+            this.simulator.putEvent(event1, 0); // log the receiver shard updated load
+            ShardloadEvent event2 = new ShardloadEvent(this.simulator.getSimulationTime(), tx.getReceiver().getShardNumber(), ((PBFTShardedNetwork)this.network).shardLoadTracker.getLoad(tx.getReceiver().getShardNumber()),0); 
+            this.simulator.putEvent(event2, 1); // log the receiver shard updated load
             System.out.println("CrossShard Transaction occuring....");
             System.out.println("Sender shard: " + senderShard);
             for (int i = 0; i < tx.getReceivers().size(); i++) {
@@ -185,8 +206,8 @@ public class ShardedClient extends Node{
             TransactionCreationEvent event = new TransactionCreationEvent(this.simulator.getSimulationTime(), tx,((PBFTShardedNetwork)this.network).clientIntraShardTransactions,  ((PBFTShardedNetwork) this.network).clientCrossShardTransactions++);
             this.simulator.putEvent(event, 0);
             this.sendCrossShardTransaction(tx);
-            MigrationEvent event2 = new MigrationEvent(this.simulator.getSimulationTime(), null, senderShard, senderShard, 0, ((PBFTShardedNetwork) this.network).clientCrossShardTransactions , ((PBFTShardedNetwork) this.network).clientIntraShardTransactions,((PBFTShardedNetwork) this.network).committedTransactions, 0,    ((PBFTShardedNetwork) this.network).committedMigrations);
-            this.simulator.putEvent(event2, 0);
+            MigrationEvent event3 = new MigrationEvent(this.simulator.getSimulationTime(), null, senderShard, senderShard, 0, ((PBFTShardedNetwork) this.network).clientCrossShardTransactions , ((PBFTShardedNetwork) this.network).clientIntraShardTransactions,((PBFTShardedNetwork) this.network).committedTransactions, 0,    ((PBFTShardedNetwork) this.network).committedMigrations);
+            this.simulator.putEvent(event3, 0);
             } else {
             // intra-Shard
            // ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(senderShard, 1);

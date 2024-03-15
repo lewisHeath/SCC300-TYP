@@ -20,9 +20,10 @@ public class ShardedPBFTScenario extends AbstractScenario {
     protected boolean migration;
     protected boolean newAccountMigration;
     protected boolean mainshardMigration;
+    protected boolean newAccountMigration2;
 
     public ShardedPBFTScenario(String name, long seed, int numberOfShards, int nodesPerShard, int numberOfClients, int timeBetweenTxs,
-            double simulationStopTime, String protocol, boolean migration,boolean mainshardMigration, boolean newAccountMigration) {
+            double simulationStopTime, String protocol, boolean migration,boolean mainshardMigration, boolean newAccountMigration, boolean newAccountMigration2) {
         super(name, seed);
         this.numberOfShards = numberOfShards;
         this.nodesPerShard = nodesPerShard;
@@ -33,14 +34,15 @@ public class ShardedPBFTScenario extends AbstractScenario {
         this.migration = migration;
         this.newAccountMigration = newAccountMigration;
         this.mainshardMigration = mainshardMigration;
+        this.newAccountMigration2 = newAccountMigration2;
     }
 
     @Override
     public void createNetwork() {
         if(this.protocol.equals("client")) {
-            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, true, migration, mainshardMigration,newAccountMigration);
+            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, true, migration, mainshardMigration,newAccountMigration, newAccountMigration2);
         } else if(this.protocol.equals("shard")) {
-            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, false, migration,mainshardMigration ,newAccountMigration);
+            network = new PBFTShardedNetwork(randomnessEngine, numberOfShards, nodesPerShard, numberOfClients, timeBetweenTxs, false, migration,mainshardMigration ,newAccountMigration, newAccountMigration2);
         } else {
             System.out.println("Invalid protocol");
             System.exit(1);
