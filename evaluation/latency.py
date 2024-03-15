@@ -34,21 +34,21 @@ def process_csv(df, nameOfFile):
     return df
 
 # import the data
-df_1_shard = pd.read_csv('../output/GlobalStats-CommittedLogger-1s48n100c.csv')
+df_1_shard = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
 # cut off at Time > 60
 df_1_shard = df_1_shard[df_1_shard['Time'] < 60]
 # client led
-df_2_shard_clientled = pd.read_csv('../output/GlobalStats-CommittedLogger-Clientled-2s24n100c.csv')
-df_3_shard_clientled = pd.read_csv('../output/GlobalStats-CommittedLogger-Clientled-3s16n100c.csv')
-df_4_shard_clientled = pd.read_csv('../output/GlobalStats-CommittedLogger-Clientled-4s12n100c.csv')
-df_6_shard_clientled = pd.read_csv('../output/GlobalStats-CommittedLogger-Clientled-6s8n100c.csv')
-df_8_shard_clientled = pd.read_csv('../output/GlobalStats-CommittedLogger-Clientled-8s6n100c.csv')
+df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_3_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_6_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
 # shard led
-df_2_shard_shardled = pd.read_csv('../output/GlobalStats-CommittedLogger-Shardled-2s24n100c.csv')
-df_3_shard_shardled = pd.read_csv('../output/GlobalStats-CommittedLogger-Shardled-3s16n100c.csv')
-df_4_shard_shardled = pd.read_csv('../output/GlobalStats-CommittedLogger-Shardled-4s12n100c.csv')
-df_6_shard_shardled = pd.read_csv('../output/GlobalStats-CommittedLogger-Shardled-6s8n100c.csv')
-df_8_shard_shardled = pd.read_csv('../output/GlobalStats-CommittedLogger-Shardled-8s6n100c.csv')
+df_2_shard_shardled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_3_shard_shardled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_4_shard_shardled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_6_shard_shardled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_8_shard_shardled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
 
 # process the data
 df_1_shard = process_csv(df_1_shard, '1 Shard')

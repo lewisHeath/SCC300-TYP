@@ -38,7 +38,7 @@ public class MigrationLogger extends AbstractCSVLogger {
 
     @Override
     protected String[] csvHeaderOutput() {
-        return new String[]{"CrossShard Transactions" , "IntraShard Transactions" , "Simulation Time", "Migration Count"};
+        return new String[]{"CrossShard Transactions" , "IntraShard Transactions" , "Simulation Time", "Migration Count", "Transactions Committed", "Migrations Committed"};
     }
 
     @Override
@@ -46,7 +46,7 @@ public class MigrationLogger extends AbstractCSVLogger {
         // Extract migration-related information from the event and return as an array
         MigrationEvent migrationEvent = (MigrationEvent) event;
         return new String[]{String.valueOf(migrationEvent.getCrossShardValue()),
-                String.valueOf(migrationEvent.getIntraShardValue()), String.valueOf(migrationEvent.getTime()), String.valueOf(migrationEvent.getMigrationCount())};
+                String.valueOf(migrationEvent.getIntraShardValue()), String.valueOf(migrationEvent.getTime()), String.valueOf(migrationEvent.getMigrationCount()), String.valueOf(migrationEvent.committedTransactions()), String.valueOf(migrationEvent.getMigrationsCommitted())};
     }
 
     @Override

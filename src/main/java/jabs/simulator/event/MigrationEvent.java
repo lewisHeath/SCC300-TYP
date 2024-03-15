@@ -16,8 +16,9 @@ public class MigrationEvent extends AbstractLogEvent {
     private PBFTShardedNetwork network;
     private int MigrationCount;
     private String PolicyType;
+    private int MigrationsCommitted;
 
-    public MigrationEvent(double time, EthereumAccount account, int currentShard, int newShard, int ThresholdValue, int CrossShard, int IntraShard, int committedTransactions, int MigrationCount) {
+    public MigrationEvent(double time, EthereumAccount account, int currentShard, int newShard, int ThresholdValue, int CrossShard, int IntraShard, int committedTransactions, int MigrationCount, int MigrationsCommitted) {
         super(time);
         this.MigrationTime = time;
         this.CrossShard = CrossShard;
@@ -28,6 +29,7 @@ public class MigrationEvent extends AbstractLogEvent {
         this.committedTransactions = committedTransactions;
         this.currentShard = currentShard;
         this.newShard = newShard;
+        this.MigrationsCommitted = MigrationsCommitted;
     }
 
     public EthereumAccount getAccount() {
@@ -67,6 +69,11 @@ public class MigrationEvent extends AbstractLogEvent {
     public double getTime()
     {
         return MigrationTime;
+    }
+
+    public int getMigrationsCommitted()
+    {
+        return MigrationsCommitted;
     }
 
     

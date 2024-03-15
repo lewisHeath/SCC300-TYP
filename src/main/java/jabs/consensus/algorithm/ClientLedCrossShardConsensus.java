@@ -42,9 +42,10 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private ThresholdMigrationPolicy migrationPolicy;
    // private ShardLoadTracker shardLoadTracker;
     private MigrationOfExistingAccounts existingAccountsMigration;
-    private EthereumAccount[][] CrossShardVector; // this is  the alinment vector
+   
     private int PolicyUse = 1;
     private boolean migrationApproved = false;
+    public EthereumAccount[][] crossShardVector;
     
 
     public ClientLedCrossShardConsensus(PBFTShardedNode node) {
@@ -52,9 +53,14 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
         this.network = (PBFTShardedNetwork) node.getNetwork();
         this.clientCrossShardTransactions = 0;
-        this.migrationPolicy = new ThresholdMigrationPolicy(2, this.network, accountsInMigration, this.node); // migration policy called and set
+        this.migrationPolicy = new ThresholdMigrationPolicy(1, this.network, accountsInMigration, this.node); // migration policy called and set
         this.existingAccountsMigration = new MigrationOfExistingAccounts((((PBFTShardedNetwork)this.network).shardLoadTracker), this.network);
-    }
+         // Initialize crossShardVector dynamically
+        int maxAccountNumber = ((PBFTShardedNetwork)this.network).accountsNumber;
+        int maxShardNumber = ((PBFTShardedNetwork)this.network).getNumberOfShards();
+        
+        this.crossShardVector = new EthereumAccount[maxAccountNumber + 1][maxShardNumber + 1];
+    }   
 
     public void setID(int ID){
         this.thisID = ID;
@@ -186,11 +192,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         // Get the transactions from the block
         ArrayList<EthereumTx> transactions = block.getTransactions();
     
-        // Initialize crossShardVector dynamically
-        int maxAccountNumber = ((PBFTShardedNetwork)this.network).accountsNumber;
-        int maxShardNumber = ((PBFTShardedNetwork)this.network).getNumberOfShards();
-        
-        EthereumAccount[][] crossShardVector = new EthereumAccount[maxAccountNumber + 1][maxShardNumber + 1];
+       
 
         // Update transaction history and process transactions
         for (EthereumTx tx : transactions) {
@@ -206,8 +208,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                 int receiverAccountNumber = receiver.getAccountNumber();
                 int receiverShardNumber = receiver.getShardNumber();
                 crossShardVector[receiverAccountNumber][receiverShardNumber] = receiver;
-    
-                // Print involved account information
+                    // Print involved account information
                 System.out.println("INVOLVE ACCOUNTS IN PROCESS: " + sender.getShardNumber() + " -> " + receiver.getShardNumber());
     
                 // Create a unique identifier for the transaction involving both sender and receiver
@@ -242,39 +243,42 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                         node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
                     }
                 }
-                if (sender != tx.getReceiver() && ((PBFTShardedNetwork)this.network).migration == true && sender.haveMigrated() == false || ((PBFTShardedNetwork)this.network).mainshardMigration == true && sender.haveMigrated() == false && sender != tx.getReceiver()){
-                    initiateMigration(tx);
-                }
             }
-            // Update transaction history and initiate migration, and passing @crossShardVector with the new values
-            existingAccountsMigration.updateTransactionHistory(transactions, crossShardVector);
-           // (((PBFTShardedNetwork)this.network).shardLoadTracker).updateLoad(senderShardNumber, 1);
+          
+            if (tx.getSender().getShardNumber() != tx.getReceiver().getShardNumber() && ((PBFTShardedNetwork)this.network).migration == true || ((PBFTShardedNetwork)this.network).mainshardMigration == true && tx.getSender().getShardNumber() != tx.getReceiver().getShardNumber()){
+                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+                executeMigration(tx, tx.getReceiver().getShardNumber());
+            }
         }
+        
+        // Update transaction history and initiate migration, and passing @crossShardVector with the new values
+        existingAccountsMigration.updateTransactionHistory(transactions, crossShardVector);
+       // (((PBFTShardedNetwork)this.network).shardLoadTracker).updateLoad(senderShardNumber, 1);
     }
     
 
     private void executeMigration(EthereumTx tx, int receiverShard) {
+        if(tx.getSender().getShardNumber() != receiverShard){
+        System.out.println("check : " + tx.getSender().getShardNumber() + " and "+ receiverShard);
         // Get the sender shard and initialize CrossShardVector
-        int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());
-        EthereumAccount[][] crossShardVector = new EthereumAccount[((PBFTShardedNetwork) this.network).getNumberOfShards()][];        
-        // Execute migration for each receiver account
-        // Perform migration if necessary
-        migrationPolicy.migrateIfNecessary(tx.getSender(), tx.getReceiver(), tx.getSender(), crossShardTransactionCount, ((PBFTShardedNetwork)this.network).migration);
-        if(((PBFTShardedNetwork)this.network).mainshardMigration == true){
+        int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());   
+        migrationPolicy.migrateIfNecessary(tx.getReceiver(), tx.getSender(), crossShardTransactionCount, ((PBFTShardedNetwork)this.network).migration);
+        System.out.println("After check : " + tx.getSender().getShardNumber() + " and "+ receiverShard);
+        if(((PBFTShardedNetwork)this.network).mainshardMigration == true && !tx.getSender().haveMigrated()){
             // Check if migration to main shard is needed
-            boolean migrateMainShard = existingAccountsMigration.shouldMigrate(tx.getReceiver(), crossShardVector, senderShard,  ((PBFTShardedNetwork)this.network).mainshardMigration);
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getReceiver().getShardNumber());
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getSender().getShardNumber());
+            boolean migrateMainShard = existingAccountsMigration.shouldMigrate(tx.getReceiver(), crossShardVector, tx.getSender().getShardNumber(),  ((PBFTShardedNetwork)this.network).mainshardMigration);
             if (migrateMainShard) {
-                // Get the least loaded shard and migrate the account
+                // Get the least loaded shard and migrate the account 
                 int leastLoadedShard = (((PBFTShardedNetwork)this.network).shardLoadTracker).getLeastLoadedShard();
-                EthereumAccount leastloadedShardAccount = ((PBFTShardedNetwork) this.network).getAccountByShardNumber(leastLoadedShard);
-                migrationPolicy.migrateAccount(tx.getReceiver(), leastloadedShardAccount, tx.getSender());
+                System.out.println("1111111111111111111111111111111"+leastLoadedShard);
+                ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(leastLoadedShard, 1);     
+                migrationPolicy.migrateAccount(leastLoadedShard, tx.getSender());
                 }
             }
+        }
     }
-    
-    
-
-
 
         // Method to initiate migration
     public void initiateMigration(EthereumTx tx) {
@@ -292,9 +296,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
        
           for (EthereumAccount account : accountsInThisShard) {
             if (lockedAccounts.contains(account)) {
-                // if the account is locked, send a prepareNOTOK message back to the client node
+                // if the account is locked, send a migration rejected message back to the client node
                 message = new CoordinationMessage(tx, "migration_rejected");
-                // IF THIS IS NODE 0, TELL ALL SHARD NODES TO SEND PREPARENOTOK
+                // IF THIS IS NODE 0, TELL ALL SHARD NODES TO SEND migration rejected
                 // node.sendMessageToNode(message, from);
                 if(thisID == 0){
                     node.broadcastMessage(new CoordinationMessage(tx, "migration_request", this.node));
@@ -308,7 +312,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             }
         }
           for (EthereumAccount account : accountsInThisShard) {
-            lockedAccounts.add(account);
+            lockedAccounts.add(account); 
             lockedAccountsToTransactions.put(account, tx);
             // account locking event
             AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account, this.node);
@@ -326,9 +330,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
                 node.sendMessageToNode(message, from);
             }
         }
-        // System.out.println("Sending prepareOK message back to client node");
-        // add the transaction to the prepared transactions list
-        executeMigration(tx, newShard);
+      
     }
 
 
@@ -336,6 +338,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         EthereumTx tx = (EthereumTx) message.getData();
         int receiverShard = tx.getReceiver().getShardNumber();
         executeMigration(tx, receiverShard);
+      //  ((PBFTShardedNetwork)this.network).committedMigrations++;
     }
     
     private void processMigrationRejection(CoordinationMessage message) {
@@ -343,8 +346,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         int receiverShard = tx.getReceiver().getShardNumber();
         
     }
-    
-    
+
 
     private boolean isAccountInMigration(EthereumAccount account) {
     // return true if the account is migrating, or migrated   
@@ -387,6 +389,5 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         }
         return 0;  
     }
-    
 
 }

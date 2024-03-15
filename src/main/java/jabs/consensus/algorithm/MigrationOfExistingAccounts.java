@@ -12,6 +12,9 @@ import jabs.network.networks.sharded.PBFTShardedNetwork;
 import jabs.network.networks.sharded.ShardLoadTracker;
 import java.util.*;
 
+//  removed transaction count, i already increase shard loads based on cross-shard transactions,
+// so it is mapped with the alignment, also changed account shard assingment, every 2 accounts are in the same shard now
+// increase load size for cross-shard transactions to 2 instead of 1
 
 public class MigrationOfExistingAccounts implements MigrationPolicy {
     private ShardLoadTracker shardLoadTracker;
@@ -25,23 +28,20 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
         this.shardLoadTracker = shardLoadTracker;
         this.network = network;
     }
-
+                                   // receiver                                                    //sender
     public boolean shouldMigrate(EthereumAccount account, EthereumAccount[][] crossShardVector, int mainShard, boolean activate) {
         // Calculate the alignment vector based on shard load information and transaction history
         if (activate) {
             EthereumAccount[][] alignmentVector = calculateAlignmentVector(crossShardVector);
-    
             // Get the current shard of the account
             int currentShard = getCurrentShard(account);
-    
-                // Getting the alignment of the account towards its current shard and the main shard and checking if they are null
+            // Getting the alignment of the account towards its current shard and the main shard and checking if they are null
             int alignmentToCurrentShard = (crossShardVector[currentShard] != null) ? crossShardVector[currentShard].length + 1 : 0;
-        //    int alignmentToMainShard = (crossShardVector[mainShard] != null) ? crossShardVector[mainShard].length + 1 : 0;
-
-    
+            //  int alignmentToMainShard = (crossShardVector[mainShard] != null) ? crossShardVector[mainShard].length + 1 : 0;
+            // main shard was used for testing what difference it would make
             // Calculate the sum of alignments towards other shards (excluding the current shard)
             int sumOfOtherAlignments = getSumOfOtherAlignments(alignmentVector, account, currentShard);
-    
+            System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
             // Determine if the account should be migrated
             if (alignmentToCurrentShard < (sumOfOtherAlignments - alignmentToCurrentShard)) {
                 return true; // Migrate to the main shard
@@ -56,12 +56,13 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
     // Method to calculate the alignment vector
     // iterates through each shard, calculates alignment inversely proportional to load, and adds the recent transaction count to adjust the alignment.
     // the shard with the least alignment vector is what we want
+
     private EthereumAccount[][] calculateAlignmentVector(EthereumAccount[][] crossShardVector) {
-        EthereumAccount[][] alignmentVector = new EthereumAccount[shardLoadTracker.getShardLoads().size()][];
+        EthereumAccount[][] alignmentVector = new EthereumAccount[shardLoadTracker.getShardLoads().size()][]; 
         // Update alignment for each shard based on their loads and transaction history
         for (Map.Entry<Integer, Integer> entry : shardLoadTracker.getShardLoads().entrySet()) {
             int shardNumber = entry.getKey(); // get shard number
-            int shardLoad = entry.getValue(); // and get shard load
+            int shardLoad = entry.getValue(); // and get its shard load
             // Calculate alignment based on shard load
             int alignment = 1 / shardLoad;
            // System.out.println(alignment);
@@ -71,7 +72,7 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
             alignment += transactionsInShard; // increase the alignment  
             alignmentVector[shardNumber] = new EthereumAccount[alignment];
         }
-    
+
         return alignmentVector;
     }
     
@@ -83,6 +84,7 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
                 sum += alignmentVector[i].length;
             }
         }
+        System.out.println(currentShard);
         System.out.println("Alignment towards other shards :" + sum);
         return sum;
     }
@@ -126,7 +128,7 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
         }
     }
     
-    
+    // alignment vector gets populated when processing a block, after that a migration might happen, therefore this has to be called
     private void updateAlignmentVector(EthereumAccount sender, EthereumAccount receiver, EthereumAccount[][] alignmentVector) {
         // Update alignment vector based on sender and receiver accounts
         int senderShard = sender.getShardNumber();
@@ -157,13 +159,12 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
         }
     }
     
-    // Method to count transactions in a shard from the transaction history
+    // Method to count how many transactions in a shard from the transaction history
     private int countTransactionsInShard(int shardNumber) {
         int count = 0;
         for (Pair<EthereumAccount, EthereumAccount> transaction : transactionHistory) {
             EthereumAccount senderAccount = transaction.getFirst(); // get sender
             EthereumAccount receiverAccount = transaction.getSecond(); // get receiver
-
             if (senderAccount.getShardNumber() == shardNumber || receiverAccount.getShardNumber() == shardNumber) {
                 count++; // increase
             }
@@ -176,17 +177,15 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
         return account.getShardNumber();
     }
 
-    
-
     @Override
-    public void migrateIfNecessary(EthereumAccount account, EthereumAccount receiver, EthereumAccount sender,
+    public void migrateIfNecessary(EthereumAccount receiver, EthereumAccount sender,
                                    Map<String, Integer> crossShardTransactionCount, boolean activate) {
         // Method not implemented for this policy
         throw new UnsupportedOperationException("Unimplemented method 'migrateIfNecessary'");
     }
 
     @Override
-    public void migrateAccount(EthereumAccount accounts, EthereumAccount receiverAccount,
+    public void migrateAccount(int receiverAccount,
                                EthereumAccount currentAccount) {
         // Method not implemented for this policy
         throw new UnsupportedOperationException("Unimplemented method 'migrateAccount'");

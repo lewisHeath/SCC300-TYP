@@ -6,8 +6,8 @@ from matplotlib.ticker import FuncFormatter
 # client led
 
 
-df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/with_Migration/exponent2.6/seed1/ClientledCoordinationMessageLogger-10s10n800c.csv')
-df_10_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/ClientledCoordinationMessageLogger-10s10n800c.csv')
+df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent0.4/seed1/ClientledCoordinationMessageLogger-6s10n800c.csv')
+df_10_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/exponent0.4/seed1/ClientledCoordinationMessageLogger-6s10n800c.csv')
 
 # client led
 print("Intra-shard-committed messages for 2 shard clientled: " + str(df_2_shard_clientled[df_2_shard_clientled['MessageType'] == 'intra-shard-committed'].shape[0]))

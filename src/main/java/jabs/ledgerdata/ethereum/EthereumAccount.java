@@ -30,16 +30,16 @@ public class EthereumAccount extends BasicData {
 
     public boolean haveMigrated()
     {
-        return migrated;
+        return this.migrated;
     }
 
     public boolean isAssigned()
     {
         return isAssigned;
     }
-
+    // @isAssigned is assigned to an account or not
     public void Uniassigned(boolean isAssigned)
-    {
+    { 
         this.isAssigned = isAssigned;
     }
 

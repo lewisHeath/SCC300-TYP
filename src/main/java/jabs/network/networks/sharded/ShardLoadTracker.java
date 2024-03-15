@@ -30,8 +30,7 @@ public class ShardLoadTracker {
     
     public int getLeastLoadedShard() {
         int leastLoad = Integer.MAX_VALUE;
-        int leastLoadedShard = -1;
-    
+        int leastLoadedShard = -1;   
         for (Map.Entry<Integer, Integer> entry : shardLoads.entrySet()) {
             int load = entry.getValue();
             if (load < leastLoad) {
@@ -39,15 +38,11 @@ public class ShardLoadTracker {
                 leastLoadedShard = entry.getKey();
             }
         }
-    
         // If no shard has accounts (load == 0), assign to shard 0 initially
-        if (leastLoad == -1) {
-            
-            leastLoadedShard = i;
-            
+        if (leastLoad == -1) {         
+            leastLoadedShard = i;  
         }
-    
-        return leastLoadedShard;
+        return leastLoadedShard; // main shard
     }
     
 
