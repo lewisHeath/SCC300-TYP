@@ -21,7 +21,7 @@ public class Main {
         AbstractScenario scenario;
         /* SHARDED TESTING */
 
-        /* 2,4,6,680,52,192,122,256 shards with 6 per shard testing, client led */
+        /* 2,4,6,680,52,128,122,256 shards with 6 per shard testing, client led */
         /* transaction committed logger, as well as creation logger, account locks and unlocks logger, coordination message logger, aborted logger */
         int[] clients = {50, 50, 80, 80, 300, 400, 200, 1500, 5000, 5000};
 
@@ -53,8 +53,8 @@ public class Main {
         int randomNum = 1;
         for(randomNum = 1; randomNum < 2; randomNum++){
             System.out.println("randomNum: " + randomNum);
-            for(int i = 192, j = 4; i <= 192; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 192, 10, clients[j], 1,100, "client", true, false, false , true);
+            for(int i = 128, j = 4; i <= 128; i = i * 2, j++) {
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 128, 10, clients[j], 1,100, "client", true, false, false , true);
                 // System.out.println("output/tenNodesSimulations/shardled/8000accounts/Shardled-CommittedLogger-" + i + "s6n" + clients[j] + "c.csv");
                 scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s6n" + clients[j] + "c.csv")));
                 scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s6n" + clients[j] + "c.csv")));
@@ -80,8 +80,8 @@ public class Main {
         randomNum = 1;
           for(randomNum = 1; randomNum < 2; randomNum++){
               System.out.println("randomNum: " + randomNum);
-              for(int i = 192, j = 4; i <=192; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 192, 10, clients[j], 1,100, "client", false, true , false , true);
+              for(int i = 128, j = 4; i <=128; i = i * 2, j++) {
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 128, 10, clients[j], 1,100, "client", false, true , false , true);
                 // System.out.println("output/tenNodesSimulations/shardled/8000accounts/Shardled-CommittedLogger-" + i + "s6n" + clients[j] + "c.csv");
                 scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s6n" + clients[j] + "c.csv")));
                 scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s6n" + clients[j] + "c.csv")));
@@ -98,8 +98,8 @@ public class Main {
           randomNum = 1;
           for(randomNum = 1; randomNum < 2; randomNum++){
               System.out.println("randomNum: " + randomNum);
-              for(int i = 192, j = 4; i <=192; i = i * 2, j++) {
-                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 192, 10, clients[j], 1,100, "client", false, false , false , false);
+              for(int i = 128, j = 4; i <=128; i = i * 2, j++) {
+                scenario = new ShardedPBFTScenario("sharded PBFT scenario", randomNum, 128, 10, clients[j], 1,100, "client", false, false , false , false);
                 // System.out.println("output/tenNodesSimulations/shardled/8000accounts/Shardled-CommittedLogger-" + i + "s6n" + clients[j] + "c.csv");
                 scenario.AddNewLogger(new TransactionCommittedLogger(Paths.get("output/tenNodesSimulations/clientled/WithoutConsensus/regular/exponent1.4/seed" + randomNum + "/Clientled-CommittedLogger-" + i + "s6n" + clients[j] + "c.csv")));
                 scenario.AddNewLogger(new TransactionCreationLogger(Paths.get("output/tenNodesSimulations/clientled/WithoutConsensus/regular/exponent1.4/seed" + randomNum + "/Clientled-CreationLogger-" + i + "s6n" + clients[j] + "c.csv")));
