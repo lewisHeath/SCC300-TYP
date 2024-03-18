@@ -1,98 +1,78 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.patches as mpatches
 
-# Load the without migration data
-df_0_2Exponent = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.8/seed1/Clientled-WithoutMigrations-6s6n300c.csv')
+# Example file paths, replace these with your actual file paths
+file_paths = {
+    '0.6': {'main_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv', 'main_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/regular/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/regular/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/DynamicShardAssignment/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/regular/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv'},
+    '0.8': {'main_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv', 'main_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/regular/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/regular/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/DynamicShardAssignment/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/regular/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv'},
+    '1.2': {'main_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv', 'main_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/regular/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/regular/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/DynamicShardAssignment/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/regular/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv'},
+    '1.4': {'main_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-Migrations-6s6n300c.csv', 'main_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/regular/exponent1.4/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/regular/exponent1.4/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/regular/exponent1.4/seed1/Clientled-Migrations-6s6n300c.csv'},
+    '1.6': {'main_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv', 'main_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/regular/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/regular/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/DynamicShardAssignment/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/regular/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv'},
+    #'1.8' :{'main_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/DynamicShardAssignment/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv', 'main_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/MainShard/WithoutConsensus/regular/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/DynamicShardAssignment/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv', 'TransactionBased_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DataStructure/WithoutConsensus/regular/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_with_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/DynamicShardAssignment/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv', 'new_accounts_without_Dynamic_ShardAssignment': 'output/tenNodesSimulations/clientled/DynamicShardAssignment/WithoutConsensus/regular/exponent1.8/seed1/Clientled-Migrations-6s6n300c.csv'} 
+    # Add paths for other exponents
+}
 
-# Load the migration data
-df_0_4Exponent = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent0.4/seed1/Clientled-Migrations-6s6n300c.csv')
+# Exponents and policies for plotting
+exponents = ['0.6', '0.8', '1.2' , '1.4' , '1.6']  # Add other exponents as needed
+policies = ['main_with_Dynamic_ShardAssignment', 'main_without_Dynamic_ShardAssignment', 'TransactionBased_with_Dynamic_ShardAssignment', 'TransactionBased_without_Dynamic_ShardAssignment', 'new_accounts_with_Dynamic_ShardAssignment', 'new_accounts_without_Dynamic_ShardAssignment']
+colors = ['blue', 'green', 'red', 'orange', 'magenta', 'brown']  # Extend as needed for policies
 
-df_0_6Exponent =  pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv')
+# Initialize plot data
+data = {exp: {policy: {'cross_shard': 0, 'intra_shard': 0} for policy in policies} for exp in exponents}
 
-df_0_8Exponent =  pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent0.8/seed1/Clientled-Migrations-6s6n300c.csv')
+# Load data (this is a placeholder - replace with your actual data loading logic)
+for exponent, paths in file_paths.items():
+    for policy, path in paths.items():
+        df = pd.read_csv(path)
+        cross_shard = df['CrossShard Transactions'].max()
+        intra_shard = df['IntraShard Transactions'].max()
+        migration_count = df['Migration Count'].max()
+        data[exponent][policy]['cross_shard'] = cross_shard
+        data[exponent][policy]['intra_shard'] = intra_shard
+        data[exponent][policy]['migration_count'] = migration_count
 
-df_1_0Exponent =  pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent1.6/seed1/Clientled-Migrations-6s6n300c.csv')
+# Adjustments for better visualization
+bar_width = 0.15  # Adjust bar width for visibility
+space_between_bars_within_group = 0.02  # Space between bars within the same group
+space_between_groups = 0.15  # Space between different groups (exponents)
 
-df_1_2Exponent =  pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent1.2/seed1/Clientled-Migrations-6s6n300c.csv')
+fig, ax = plt.subplots(figsize=(15, 8))
 
+# Calculate the number of groups and the total number of bars in a group
+num_groups = len(exponents)
+bars_per_group = len(policies)
 
+# Generate base positions for each group
+base_positions = np.arange(num_groups) * (bars_per_group * bar_width + space_between_groups)
 
-# Convert columns to numeric, handling non-numeric values
-numeric_cols = ['CrossShard Transactions', 'IntraShard Transactions', 'Simulation Time']
-df_0_4Exponent[numeric_cols] = df_0_4Exponent[numeric_cols].apply(pd.to_numeric, errors='coerce')
-df_0_2Exponent[numeric_cols] = df_0_2Exponent[numeric_cols].apply(pd.to_numeric, errors='coerce')
-df_0_6Exponent[numeric_cols] = df_0_6Exponent[numeric_cols].apply(pd.to_numeric, errors='coerce')
-df_0_8Exponent[numeric_cols] = df_0_8Exponent[numeric_cols].apply(pd.to_numeric, errors='coerce')
-df_1_0Exponent[numeric_cols] = df_1_0Exponent[numeric_cols].apply(pd.to_numeric, errors='coerce')
-df_1_2Exponent[numeric_cols] = df_1_2Exponent[numeric_cols].apply(pd.to_numeric, errors='coerce')
-# Calculate the total transactions for each scenario
-crossShard_0_4Exponent = df_0_4Exponent['CrossShard Transactions'].max()
-intraShard_0_4Exponent = df_0_4Exponent['IntraShard Transactions'].max()
-crossShard_0_6Exponent = df_0_6Exponent['CrossShard Transactions'].max()
-intraShard_0_6Exponent = df_0_6Exponent['IntraShard Transactions'].max()
-crossShard_0_8Exponent = df_0_8Exponent['CrossShard Transactions'].max()
-intraShard_0_8Exponent = df_0_8Exponent['IntraShard Transactions'].max()
-crossShard_0_2Exponent = df_0_2Exponent['CrossShard Transactions'].max()
-intraShard_0_2Exponent = df_0_2Exponent['IntraShard Transactions'].max()
-crossShard_1_2Exponent = df_1_2Exponent['CrossShard Transactions'].max()
-intraShard_1_2Exponent = df_1_2Exponent['IntraShard Transactions'].max()
-crossShard_1_0Exponent = df_1_0Exponent['CrossShard Transactions'].max()
-intraShard_1_0Exponent = df_1_0Exponent['IntraShard Transactions'].max()
+for i, exponent in enumerate(exponents):
+    for j, policy in enumerate(policies):
+        # Calculate specific position for each bar
+        position = base_positions[i] + (j * bar_width)
+        # Retrieve cross-shard, intra-shard, and migration count data
+        cross_shard = data[exponent][policy]['cross_shard']
+        intra_shard = data[exponent][policy]['intra_shard']
+        migration_count = data[exponent][policy]['migration_count']
+        # Plot bars
+        ax.bar(position, cross_shard, width=bar_width, color=colors[j], edgecolor='black', label=f'{policy} CrossShard')
+        ax.bar(position, intra_shard, width=bar_width, bottom=cross_shard, color=colors[j], alpha=0.5, edgecolor='black', label=f'{policy} IntraShard')
+        # Add migration count on top of the cross-shard transaction bar
+        total_height = cross_shard + intra_shard
+        migration_count = migration_count  # Placeholder, replace with actual logic to retrieve migration count
+        ax.text(position, total_height, str(migration_count), ha='center', va='bottom')
 
+# Customizing plot
+ax.set_xticks(base_positions + bars_per_group * bar_width / 2 - bar_width / 2)
+ax.set_xticklabels(exponents)
+ax.set_xlabel('Exponent')
+ax.set_ylabel('Transactions')
+ax.set_title('Cross-Shard Intra-ShardTransactions by Exponent and Policy')
 
+# Create and add custom legend outside the plot
+legend_handles = [mpatches.Patch(color=color, label=policy) for policy, color in zip(policies, colors)]
+ax.legend(handles=legend_handles, title="Policies", bbox_to_anchor=(1.05, 1), loc='upper left')
 
-
-# Plotting
-fig, ax = plt.subplots()
-
-# Assuming these are your total migration counts
-df0_4Exponent_migrationCount = df_0_4Exponent['Migration Count'].max()
-df_0_6Exponent_migrationCount = df_0_6Exponent['Migration Count'].max()
-df_0_8Exponent_migrationCount = df_0_8Exponent['Migration Count'].max()
-df0_2Exponent_migrationCount = df_0_2Exponent['Migration Count'].max()
-df_1_0Exponent_migrationCount = df_1_0Exponent['Migration Count'].max()
-df1_2Exponent_migrationCount = df_1_2Exponent['Migration Count'].max()
-
-
-# Labels for your bars
-labels = ['0.2Exponent', '0.4 Exponent', '0.6 Exponent', '0.8 Exponent', '1.0 Exponent', '1.2 Exponent']
-
-# Values for CrossShard Transactions
-cross_shard_values = [crossShard_0_2Exponent, crossShard_0_4Exponent, crossShard_0_6Exponent, crossShard_0_8Exponent, crossShard_1_0Exponent, crossShard_1_2Exponent]
-
-# Values for IntraShard Transactions, note the last value for "Without Migration" is not stacked
-intra_shard_values = [intraShard_0_2Exponent, intraShard_0_4Exponent, intraShard_0_6Exponent, intraShard_0_8Exponent, intraShard_1_0Exponent, intraShard_1_2Exponent]
-
-# Migration counts to be annotated
-migration_counts = [df0_2Exponent_migrationCount, df0_4Exponent_migrationCount, df_0_6Exponent_migrationCount, df_0_8Exponent_migrationCount,  df_1_0Exponent_migrationCount,  df1_2Exponent_migrationCount ]
-
-
-# Secondary axis for Intra-Shard Transactions
-ax2 = ax.twinx()
-
-# Plot Intra-Shard Transactions on secondary y-axis
-# Note: For illustration, using the same bar positions with an offset. In practice, adjust as needed.
-offset = 0.35  # Adjust offset as needed for clarity
-ax2.bar('0_4Exponent Migration', intra_shard_values, width=offset, color='none')
-
-# Plotting the bars
-bars = ax.bar(labels, cross_shard_values, label='CrossShard Transactions', color='blue')
-# Stacking IntraShard Transactions on top of the corresponding CrossShard Transaction bars
-ax.bar(labels, intra_shard_values, bottom=cross_shard_values, label='IntraShard Transactions', color='red')
-# Invert secondary y-axis to start from top
-ax2.invert_yaxis()
-ax2.legend(loc='upper right')
-ax.set_ylabel('Number of Transactions')
-ax.set_title('Cross-shard and Intra-shard transactions with different exponent (no consensus)')
-ax.legend()
-
-# Function to annotate bars
-def annotate_bars(bars, counts):
-    for bar, count in zip(bars, counts):
-        yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, yval + 5, count, ha='center', va='bottom')
-
-# Only pass the bars that correspond to migration scenarios (exclude "Without Migration")
-annotate_bars(bars[:-1], migration_counts)
-
+plt.tight_layout()
 plt.show()

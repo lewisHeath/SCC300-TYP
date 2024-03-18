@@ -41,7 +41,6 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
             // main shard was used for testing what difference it would make
             // Calculate the sum of alignments towards other shards (excluding the current shard)
             int sumOfOtherAlignments = getSumOfOtherAlignments(alignmentVector, account, currentShard);
-            System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
             // Determine if the account should be migrated
             if (alignmentToCurrentShard < (sumOfOtherAlignments - alignmentToCurrentShard)) {
                 return true; // Migrate to the main shard

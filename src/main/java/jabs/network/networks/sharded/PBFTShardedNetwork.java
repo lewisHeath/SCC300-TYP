@@ -78,7 +78,7 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         // add accounts
         this.generateAccounts(accountsNumber, newAccountMigration);
         this.clientLed = clientLed;
-        this.generateCDF(0.6);
+        this.generateCDF(1.4);
         this.migration = migration;
         this.mainshardMigration = mainshardMigration;
         this.newAccountMigration2 = newAccountMigration2;
@@ -234,9 +234,9 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
             }
             this.shardToAccounts.get(shardNumber).add(account);
         }
-        for(int i = 0; i < this.shardToAccounts.size(); i++){
+      /*   for(int i = 0; i < this.shardToAccounts.size(); i++){
             System.out.println("size of shard(" + i + ") in generateAccounts() method: " + this.shardToAccounts.get(i).size());
-            }
+            }*/
          
         }
     }
