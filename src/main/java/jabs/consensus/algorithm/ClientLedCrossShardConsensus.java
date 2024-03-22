@@ -246,8 +246,9 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             }
           
             if (tx.getSender().getShardNumber() != tx.getReceiver().getShardNumber() && ((PBFTShardedNetwork)this.network).migration == true || ((PBFTShardedNetwork)this.network).mainshardMigration == true && tx.getSender().getShardNumber() != tx.getReceiver().getShardNumber()){
-                System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-                executeMigration(tx, tx.getReceiver().getShardNumber());
+              //  System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+               // initiateMigration(tx);  consensus
+               executeMigration(tx, tx.getReceiver().getShardNumber()); // without consensus
             }
         }
         
@@ -266,13 +267,13 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         System.out.println("After check : " + tx.getSender().getShardNumber() + " and "+ receiverShard);
         if(((PBFTShardedNetwork)this.network).mainshardMigration == true && !tx.getSender().haveMigrated()){
             // Check if migration to main shard is needed
-            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getReceiver().getShardNumber());
-            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getSender().getShardNumber());
+       //     System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getReceiver().getShardNumber());
+       //     System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getSender().getShardNumber());
             boolean migrateMainShard = existingAccountsMigration.shouldMigrate(tx.getReceiver(), crossShardVector, tx.getSender().getShardNumber(),  ((PBFTShardedNetwork)this.network).mainshardMigration);
             if (migrateMainShard) {
                 // Get the least loaded shard and migrate the account 
                 int leastLoadedShard = (((PBFTShardedNetwork)this.network).shardLoadTracker).getLeastLoadedShard();
-                System.out.println("1111111111111111111111111111111"+leastLoadedShard);
+         //       System.out.println("1111111111111111111111111111111"+leastLoadedShard);
                 ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(leastLoadedShard, 1);     
                 migrationPolicy.migrateAccount(leastLoadedShard, tx.getSender());
                 }

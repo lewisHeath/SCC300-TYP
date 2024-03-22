@@ -275,10 +275,10 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
                     shardsList.remove(0);
                 }
             //debuugg $
-            System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-            System.out.println("siiiiiiiize ****************** : "+ accountToShard.size() );
-            System.out.println(account);
-            System.out.println("Account randomed **************** : "+ account + "Shard :" + account.getShardNumber());
+          //  System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+         //   System.out.println("siiiiiiiize ****************** : "+ accountToShard.size() );
+          //  System.out.println(account);
+          //  System.out.println("Account randomed **************** : "+ account + "Shard :" + account.getShardNumber());
             return account;
         }
         else{ // the normal account getter process
@@ -301,16 +301,16 @@ public class PBFTShardedNetwork extends Network<Node, EightySixCountries> {
         if (this.shardToAccounts.get(shardsList.get(0)) == null) { 
             this.shardToAccounts.put(shardsList.get(0), new ArrayList<>());
         }
-        System.out.println("least loaded shard :" + shardsList.get(0));
+       // System.out.println("least loaded shard :" + shardsList.get(0));
         this.shardToAccounts.get(shardsList.get(0)).add(account); 
-        System.out.println("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE" + this.shardToAccounts.get(shardsList.get(0)));
+       // System.out.println("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE" + this.shardToAccounts.get(shardsList.get(0)));
         this.accountToShard.put(account, shardsList.get(0)); // Ensure account is added to accountToShard
         account.SetShard(shardsList.get(0)); // update the account object shard value
         // Update shard accounts for each node in the shard
         for (int j = 0; j < shards.get(shardsList.get(0)).size(); j++) {
             shards.get(shardsList.get(0)).get(j).setShardAccounts(shardToAccounts.get(shardsList.get(0)));
         }
-        System.out.println(" ----------------------------------------------" + account.getShardNumber());
+      //  System.out.println(" ----------------------------------------------" + account.getShardNumber());
         
     }
     

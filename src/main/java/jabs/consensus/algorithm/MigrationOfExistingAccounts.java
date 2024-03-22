@@ -83,7 +83,7 @@ public class MigrationOfExistingAccounts implements MigrationPolicy {
                 sum += alignmentVector[i].length;
             }
         }
-        System.out.println(currentShard);
+      //  System.out.println(currentShard);
         System.out.println("Alignment towards other shards :" + sum);
         return sum;
     }

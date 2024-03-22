@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the data
-df = pd.read_csv('output/tenNodesSimulations/clientled/exponent0.6/seed1/Clientled-Migrations-6s6n300c.csv')
+df = pd.read_csv('output/tenNodesSimulations/clientled/DataStructure/withConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-Migrations-32s6n300c.csv')
 
 
 # Plotting
@@ -21,7 +21,7 @@ plt.scatter(migration_points['Simulation Time'], migration_points['CrossShard Tr
 # Set labels and title
 plt.xlabel('Simulation Time')
 plt.ylabel('Number of Transactions')
-plt.title('Cross-Shard and Intra-Shard Transactions over Time, with Migrations applied')
+plt.title('Transaction based policy Cross-Shard and Intra-Shard Transactions over Time, with Migrations applied')
 plt.legend()
 
 # Show plot

@@ -39,9 +39,9 @@ def process_csv(df, nameOfFile):
 
 # df_1_shard = pd.read_csv('../output/GlobalStats-CommittedLogger-Clientled-1s10n100c.csv')
 # client led
-df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
-df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
-df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent1.6/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.4/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/exponent1.4/seed1/Clientled-CommittedLogger-6s6n300c.csv')
+df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/without_consensus/exponent1.4/seed1/Clientled-CommittedLogger-6s6n300c.csv')
 
 
 
@@ -63,7 +63,7 @@ ax.set_xlabel('Time')
 ax.set_ylabel('Cumulative Committed Transactions')
 
 
-ax.set_title('Cumulative Committed Transactions(Throughput) 6 shards - 10 nodes - 1.6 exponent')
+ax.set_title('Cumulative Committed Transactions(Throughput) 6 shards - 10 nodes - 1. exponent')
 
 
 ax.legend()

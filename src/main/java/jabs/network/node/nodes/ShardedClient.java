@@ -127,7 +127,7 @@ public class ShardedClient extends Node{
         for (int i = 0; i < numAccounts; i++) {
             EthereumAccount account = ((PBFTShardedNetwork) network).getRandomAccount(true);
             accounts.add(account);
-            System.out.println("ACCOUNT received ********:" + account + " with Shard :" + ((PBFTShardedNetwork)this.network).getAccountShard(account));    
+            //System.out.println("ACCOUNT received ********:" + account + " with Shard :" + ((PBFTShardedNetwork)this.network).getAccountShard(account));    
 
         }
          
@@ -139,7 +139,7 @@ public class ShardedClient extends Node{
          // tx.setReceiver1(accounts.get(0)); // this is for migration
         //accounts.clear();
         txs.add(tx);
-        System.out.println("siiiiiiiize : "+((PBFTShardedNetwork) this.network).accountToShard.size());
+      //  System.out.println("siiiiiiiize : "+((PBFTShardedNetwork) this.network).accountToShard.size());
         System.out.println("SENDER :"  + tx.getSender());
         int senderShard = ((PBFTShardedNetwork)this.network).getAccountShard(tx.getSender()); // get sendershard N*
         EthereumAccount Sender = tx.getSender();

@@ -39,9 +39,9 @@ def process_csv(df, nameOfFile):
 
 
 # import the data
-df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent0.4/seed1/Clientled-CommittedLogger-6s10n800c.csv')
-df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/MainShard/exponent0.4/seed1/Clientled-CommittedLogger-6s10n800c.csv')
-df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAccounts/exponent0.4/seed1/Clientled-CommittedLogger-6s10n800c.csv')
+df_mainshard = pd.read_csv('output/tenNodesSimulations/clientled/MainShard/WithConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-CommittedLogger-32s6n300c.csv')
+df_DataStructure = pd.read_csv('output/tenNodesSimulations/clientled/DataStructure/withoutConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-CommittedLogger-32s6n300c.csv')
+df_regular = pd.read_csv('output/tenNodesSimulations/clientled/withoutConsensus/regular/exponent1.4/seed1/Clientled-CommittedLogger-32s6n300c.csv')
 
 
 
@@ -49,19 +49,19 @@ df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/NewAcco
 
 # process the data
 
-df_2_shard_clientled = process_csv(df_2_shard_clientled, '6 Shard Clientled')
-df_4_shard_clientled = process_csv(df_4_shard_clientled, '6 Shard Clientled')
-df_8_shard_clientled = process_csv(df_8_shard_clientled, '6 Shard Clientled')
+df_mainshard = process_csv(df_mainshard, 'Main Shard Policy')
+df_DataStructure = process_csv(df_DataStructure, 'Transaction based policy')
+df_regular = process_csv(df_regular, 'regular')
 
 
 # Create a figure and axis object
 fig, ax = plt.subplots()
 
 # Plot the cumulative committed transactions for each file on the same axis
-ax.plot(['Time'], ['CumulativeCommittedTxs'], label='1 Shard Clientled')
-ax.plot(df_2_shard_clientled['Time'], df_2_shard_clientled['CumulativeCommittedTxs'], label='none')
-ax.plot(df_4_shard_clientled['Time'], df_4_shard_clientled['CumulativeCommittedTxs'], label='Main shard')
-ax.plot(df_8_shard_clientled['Time'], df_8_shard_clientled['CumulativeCommittedTxs'], label='New accounts')
+ax.plot(['Time'], ['CumulativeCommittedTxs'])
+ax.plot(df_mainshard['Time'], df_mainshard['CumulativeCommittedTxs'], label='Main Shard')
+ax.plot(df_DataStructure['Time'], df_DataStructure['CumulativeCommittedTxs'], label='Transaction Based')
+ax.plot(df_regular['Time'], df_regular['CumulativeCommittedTxs'], label='regular')
 
 # ax.plot(df_128_shard_clientled['Time'], df_128_shard_clientled['CumulativeCommittedTxs'], label='128 Shard Clientled')
 # ax.plot(df_256_shard_clientled['Time'], df_256_shard_clientled['CumulativeCommittedTxs'], label='256 Shard Clientled')
@@ -73,7 +73,7 @@ ax.set_xlabel('Time')
 ax.set_ylabel('Cumulative Committed Transactions')
 
 # Set the title of the plot
-ax.set_title('Cumulative Committed Transactions for Different Configurations')
+ax.set_title('Throughput for different Policies (with Dynamic shard assignment and Consensus) compared to regular')
 
 # Add a legend to the plot
 ax.legend()
@@ -87,9 +87,9 @@ fig, ax = plt.subplots()
 
 # Plot the cumulative committed transactions for each file on the same axis
 ax.bar('1 Shard', ['CumulativeCommittedTxs'].iloc[-1], label='1 Shard')
-ax.bar('2 Shards', df_2_shard_clientled['CumulativeCommittedTxs'].iloc[-1], label='2 Shards')
-ax.bar('4 Shards', df_4_shard_clientled['CumulativeCommittedTxs'].iloc[-1], label='4 Shards')
-ax.bar('8 Shards', df_8_shard_clientled['CumulativeCommittedTxs'].iloc[-1], label='8 Shards')
+ax.bar('2 Shards', df_mainshard['CumulativeCommittedTxs'].iloc[-1], label='2 Shards')
+ax.bar('4 Shards', df_DataStructure['CumulativeCommittedTxs'].iloc[-1], label='4 Shards')
+ax.bar('8 Shards', df_regular['CumulativeCommittedTxs'].iloc[-1], label='8 Shards')
 
 # Set the x-label and y-label
 ax.set_xlabel('Configuration')
@@ -110,9 +110,9 @@ plt.show()
 fig, ax = plt.subplots()
 
 ax.bar('1 Shard', ['Latency'].mean(), label='1 Shard')
-ax.bar('2 Shards', df_2_shard_clientled['Latency'].mean(), label='2 Shards')
-ax.bar('4 Shards', df_4_shard_clientled['Latency'].mean(), label='4 Shards')
-ax.bar('8 Shards', df_8_shard_clientled['Latency'].mean(), label='8 Shards')
+ax.bar('2 Shards', df_mainshard['Latency'].mean(), label='2 Shards')
+ax.bar('4 Shards', df_DataStructure['Latency'].mean(), label='4 Shards')
+ax.bar('8 Shards', df_regular['Latency'].mean(), label='8 Shards')
 
 ax.set_xlabel('Configuration')
 ax.set_ylabel('Latency')
@@ -126,9 +126,9 @@ import numpy as np
 
 data = np.array([
     [['Latency'].mean(), ['CumulativeCommittedTxs'].iloc[-1], len() / ['Time'].iloc[-1]],
-    [df_2_shard_clientled['Latency'].mean(), df_2_shard_clientled['CumulativeCommittedTxs'].iloc[-1], len(df_2_shard_clientled) / df_2_shard_clientled['Time'].iloc[-1]],
-    [df_4_shard_clientled['Latency'].mean(), df_4_shard_clientled['CumulativeCommittedTxs'].iloc[-1], len(df_4_shard_clientled) / df_4_shard_clientled['Time'].iloc[-1]],
-    [df_8_shard_clientled['Latency'].mean(), df_8_shard_clientled['CumulativeCommittedTxs'].iloc[-1], len(df_8_shard_clientled) / df_8_shard_clientled['Time'].iloc[-1]],
+    [df_mainshard['Latency'].mean(), df_mainshard['CumulativeCommittedTxs'].iloc[-1], len(df_mainshard) / df_mainshard['Time'].iloc[-1]],
+    [df_DataStructure['Latency'].mean(), df_DataStructure['CumulativeCommittedTxs'].iloc[-1], len(df_DataStructure) / df_DataStructure['Time'].iloc[-1]],
+    [df_regular['Latency'].mean(), df_regular['CumulativeCommittedTxs'].iloc[-1], len(df_regular) / df_regular['Time'].iloc[-1]],
 
 ])
 
