@@ -117,7 +117,7 @@ public abstract class PeerDLTNode<B extends Block<B>, T extends Tx<T>> extends N
         }
     }
 
-    protected abstract void processNewTx(T tx, Node from);
+    protected abstract void processNewTx(T tx, Node from); ///////////////////////////////////////////
     protected abstract void processNewBlock(B block);
     protected abstract void processNewVote(Vote vote);
 

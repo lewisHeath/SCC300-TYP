@@ -1,76 +1,31 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
-df_1_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-1s10n50c.csv')
-# import the data shard led
-df_2_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-2s10n50c.csv')
-df_4_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed2/Shardled-CommittedLogger-4s10n100c.csv')
-df_8_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-8s10n100c.csv')
-df_16_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-16s10n200c.csv')
-df_32_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-32s10n400c.csv')
-df_64_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-64s10n800c.csv')
-df_128_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-128s10n800c.csv')
-df_192_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-192s10n800c.csv')
-df_256_shard_shardled = pd.read_csv('../output/tenNodesSimulations/shardled/exponent1.2/seed1/Shardled-CommittedLogger-256s10n800c.csv')
+# Load the data
+df = pd.read_csv('output/tenNodesSimulations/clientled/DataStructure/withConsensus/DynamicShardAssignment/exponent1.4/seed1/Clientled-Migrations-32s6n300c.csv')
 
-# import the data client led
-df_1_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-1s10n50c.csv')
-df_2_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n50c.csv')
-df_4_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n100c.csv')
-df_8_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n100c.csv')
-df_16_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n200c.csv')
-df_32_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n400c.csv')
-df_64_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-64s10n800c.csv')
-df_128_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-128s10n800c.csv')
-df_192_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-192s10n800c.csv')
-df_256_shard_clientled = pd.read_csv('../output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-256s10n800c.csv')
 
-def count_cross_shard_transactions(df):
-    cross_shard_count = df[df['CrossShard'] == True].shape[0]
-    non_cross_shard_count = df[df['CrossShard'] == False].shape[0]
-    return cross_shard_count, non_cross_shard_count
+# Plotting
+plt.figure(figsize=(10, 6))
 
-# all_dataframes = [df_1_shard_shardled, df_2_shard_shardled, df_4_shard_shardled, df_8_shard_shardled, df_16_shard_shardled, df_32_shard_shardled, df_64_shard_shardled, df_128_shard_shardled, df_192_shard_shardled, df_256_shard_shardled]
-all_dataframes = [df_1_shard_clientled, df_2_shard_clientled, df_4_shard_clientled, df_8_shard_clientled, df_16_shard_clientled, df_32_shard_clientled, df_64_shard_clientled, df_128_shard_clientled, df_192_shard_clientled, df_256_shard_clientled]
+# Plot cross-shard transactions
+plt.plot(df['Simulation Time'], df['CrossShard Transactions'], label='Cross-Shard Transactions', color='blue')
 
-cross_shard_counts = []
-non_cross_shard_counts = []
+# Plot intra-shard transactions
+plt.plot(df['Simulation Time'], df['IntraShard Transactions'], label='Intra-Shard Transactions', color='green')
 
-for df in all_dataframes:
-    cross_shard_count, non_cross_shard_count = count_cross_shard_transactions(df)
-    cross_shard_counts.append(cross_shard_count)
-    non_cross_shard_counts.append(non_cross_shard_count)
+# Mark migration points based on migration count
+migration_points = df[df['Migration Count'] > 0]
+plt.scatter(migration_points['Simulation Time'], migration_points['CrossShard Transactions'], color='red', label='Migration Points')
 
-labels = ['1', '2', '4', '8', '16', '32', '64', '128', '192', '256']
-x = np.arange(len(labels))
-width = 0.35
+# Set labels and title
+plt.xlabel('Simulation Time')
+plt.ylabel('Number of Transactions')
+plt.title('Transaction based policy Cross-Shard and Intra-Shard Transactions over Time, with Migrations applied')
+plt.legend()
 
-fig, ax = plt.subplots()
-rects1 = ax.bar(x - width/2, cross_shard_counts, width, label='Cross Shard')
-rects2 = ax.bar(x + width/2, non_cross_shard_counts, width, label='Non-Cross Shard')
-
-ax.set_ylabel('Number of Transactions')
-ax.set_xlabel('Number of Shards')
-ax.set_title('Cross Shard vs Non-Cross Shard Transactions ( client led )')
-ax.set_xticks(x)
-ax.set_xticklabels(labels)
-ax.legend()
-
-def autolabel(rects):
-    for rect in rects:
-        height = rect.get_height()
-        ax.annotate('{}'.format(height),
-                    xy=(rect.get_x() + rect.get_width() / 2, height),
-                    xytext=(0, 3),
-                    textcoords="offset points",
-                    ha='center', va='bottom')
-
-autolabel(rects1)
-autolabel(rects2)
-
-fig.tight_layout()
+# Show plot
+plt.grid(True)
+plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+plt.tight_layout()  # Adjust layout to prevent overlapping labels
 plt.show()
-
-
-

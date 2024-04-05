@@ -2,19 +2,26 @@ package jabs.consensus.algorithm;
 
 import jabs.network.message.CoordinationMessage;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
+import jabs.network.networks.sharded.ShardLoadTracker;
 import jabs.network.node.nodes.Node;
 import jabs.network.node.nodes.pbft.PBFTShardedNode;
 import jabs.simulator.event.AccountLockingEvent;
 import jabs.simulator.event.AccountUnlockingEvent;
+import jabs.simulator.event.MigrationEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
+import jabs.ledgerdata.Sharding.CrossShardTransaction;
 import jabs.ledgerdata.ethereum.EthereumAccount;
 import jabs.ledgerdata.ethereum.EthereumTx;
 import jabs.ledgerdata.pbft.PBFTBlock;
 
 public class ClientLedCrossShardConsensus implements CrossShardConsensus {
 
+    private int ShardLoad = 0;
     private PBFTShardedNode node;
     // data structure for tracking locked accounts
     private ArrayList<EthereumAccount> lockedAccounts = new ArrayList<EthereumAccount>();
@@ -25,12 +32,35 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     private int thisID;
     private int nodesInShard;
     private PBFTShardedNetwork network;
+    //public int MigrationCount = 0; // counter for crosshard transactions occuring
+    private EthereumAccount currentShard;
+    private EthereumAccount ReceiverShard;
+    private int newShard = 0;
+    private Set<EthereumAccount> accountsInMigration = new HashSet<>(); //hashset to save the current account that is migrating
+    private HashMap<String, Integer> crossShardTransactionCount = new HashMap<>();
+    private int clientCrossShardTransactions;
+    private ThresholdMigrationPolicy migrationPolicy;
+   // private ShardLoadTracker shardLoadTracker;
+    private MigrationOfExistingAccounts existingAccountsMigration;
+   
+    private int PolicyUse = 1;
+    private boolean migrationApproved = false;
+    public EthereumAccount[][] crossShardVector;
+    
 
     public ClientLedCrossShardConsensus(PBFTShardedNode node) {
         this.node = node;
         this.nodesInShard = ((PBFTShardedNetwork) node.getNetwork()).getNodesPerShard();
         this.network = (PBFTShardedNetwork) node.getNetwork();
-    }
+        this.clientCrossShardTransactions = 0;
+        this.migrationPolicy = new ThresholdMigrationPolicy(1, this.network, accountsInMigration, this.node); // migration policy called and set
+        this.existingAccountsMigration = new MigrationOfExistingAccounts((((PBFTShardedNetwork)this.network).shardLoadTracker), this.network);
+         // Initialize crossShardVector dynamically
+        int maxAccountNumber = ((PBFTShardedNetwork)this.network).accountsNumber;
+        int maxShardNumber = ((PBFTShardedNetwork)this.network).getNumberOfShards();
+        
+        this.crossShardVector = new EthereumAccount[maxAccountNumber + 1][maxShardNumber + 1];
+    }   
 
     public void setID(int ID){
         this.thisID = ID;
@@ -66,8 +96,19 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
             case "rollback":
                 processRollbackMessage(accountsInThisShard, tx);
                 break;
+            case "migration_request":
+                processMigrationRequest(accountsInThisShard, message, tx, messageFrom);
+                break;
+            case "migration_approved":
+                processMigrationApproval(message);
+                break;
+            case "migration_rejected":
+                processMigrationRejection(message);
+                break;
             default:
+                System.out.println(message.getType());
                 throw new RuntimeException("Unknown message type");
+                
         }
     }
 
@@ -120,7 +161,7 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         preparedTransactions.add(tx);
     }
 
-    private void processCommitMessage(EthereumTx tx, Node from) {
+    private void processCommitMessage(EthereumTx tx, Node from) {   ////////////////// 55555       here
         // add the transaction to the mempool
         if (preparedTransactionsFrom.get(tx) == from) {
             node.processNewTx(tx, from);
@@ -148,37 +189,169 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
     }
 
     public void processConfirmedBlock(PBFTBlock block) {
-        // get the transactions from the block
+        // Get the transactions from the block
         ArrayList<EthereumTx> transactions = block.getTransactions();
+    
+       
+
+        // Update transaction history and process transactions
         for (EthereumTx tx : transactions) {
-            // if the transaction is in the prepared transactions list, unlock the accounts
-            if(preparedTransactionsFrom.containsKey(tx)){
-                ArrayList<EthereumAccount> accounts = new ArrayList<EthereumAccount>();
-                // this needs upgrading to handle smart contract transactions
-                accounts.addAll(tx.getAllInvolvedAccounts());
-                // unlock the accounts
-                System.out.println("size of locked accounts before confirming: " + lockedAccounts.size());
+            // Update cross-shard transaction count for involved accounts
+            EthereumAccount sender = tx.getSender(); // get sender acc
+            int senderAccountNumber = sender.getAccountNumber(); 
+            int senderShardNumber = sender.getShardNumber(); // get sahrd and account number
+            crossShardVector[senderAccountNumber][senderShardNumber] = sender; // update crossshard vector with the values
+            
+            // Update crossShardVector for receiver as well
+            ArrayList<EthereumAccount> receivers = tx.getReceivers();
+            for (EthereumAccount receiver : receivers) {
+                int receiverAccountNumber = receiver.getAccountNumber();
+                int receiverShardNumber = receiver.getShardNumber();
+                crossShardVector[receiverAccountNumber][receiverShardNumber] = receiver;
+                    // Print involved account information
+                System.out.println("INVOLVE ACCOUNTS IN PROCESS: " + sender.getShardNumber() + " -> " + receiver.getShardNumber());
+    
+                // Create a unique identifier for the transaction involving both sender and receiver
+                String transactionKey = sender.getShardNumber() + "-" + receiver.getShardNumber();
+    
+                // Get the current count for the unique identifier and increment it
+                int transactionCount = crossShardTransactionCount.getOrDefault(transactionKey, 0);
+                crossShardTransactionCount.put(transactionKey, transactionCount + 1);
+            }
+    
+            // Unlock accounts if the transaction is in the prepared transactions list
+            if (preparedTransactionsFrom.containsKey(tx)) {
+                ArrayList<EthereumAccount> accounts = new ArrayList<>(tx.getAllInvolvedAccounts());
+                // Unlock the accounts
+                System.out.println("Size of locked accounts before confirming: " + lockedAccounts.size());
                 for (EthereumAccount account : accounts) {
                     lockedAccounts.remove(account);
-                    // account unlocking event
+                    // Account unlocking event
                     AccountUnlockingEvent event = new AccountUnlockingEvent(this.node.getSimulator().getSimulationTime(), account, this.node);
-                    if(thisID == 0) this.node.getSimulator().putEvent(event, 0);
-                    // System.out.println("Unlocking account " + account);
+                    if (thisID == 0) this.node.getSimulator().putEvent(event, 0);
                 }
                 lockedAccounts.removeAll(accounts);
-                System.out.println("size of locked accounts after confirming: " + lockedAccounts.size());
-                // send a committed message to the client node
+                System.out.println("Size of locked accounts after confirming: " + lockedAccounts.size());
+    
+                // Send a committed message to the client node
                 CoordinationMessage message = new CoordinationMessage(tx, "committed");
-                // NODE 0 TELL ALL NODES WHAT TO DO
-                if(thisID == 0){
+                // Node 0 instructs all nodes to take action
+                if (thisID == 0) {
                     ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
-                    // FORCE MESSAGE
+                    // Force message
                     for (PBFTShardedNode node : nodes) {
                         node.sendMessageToNode(message, preparedTransactionsFrom.get(tx));
                     }
                 }
             }
+          
+            if (tx.getSender().getShardNumber() != tx.getReceiver().getShardNumber() && ((PBFTShardedNetwork)this.network).migration == true || ((PBFTShardedNetwork)this.network).mainshardMigration == true && tx.getSender().getShardNumber() != tx.getReceiver().getShardNumber()){
+              //  System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+               // initiateMigration(tx);  consensus
+               executeMigration(tx, tx.getReceiver().getShardNumber()); // without consensus
+            }
         }
+        
+        // Update transaction history and initiate migration, and passing @crossShardVector with the new values
+        existingAccountsMigration.updateTransactionHistory(transactions, crossShardVector);
+       // (((PBFTShardedNetwork)this.network).shardLoadTracker).updateLoad(senderShardNumber, 1);
+    }
+    
+
+    private void executeMigration(EthereumTx tx, int receiverShard) {
+        if(tx.getSender().getShardNumber() != receiverShard){
+        System.out.println("check : " + tx.getSender().getShardNumber() + " and "+ receiverShard);
+        // Get the sender shard and initialize CrossShardVector
+        int senderShard = ((PBFTShardedNetwork) this.network).getAccountShard(tx.getSender());   
+        migrationPolicy.migrateIfNecessary(tx.getReceiver(), tx.getSender(), crossShardTransactionCount, ((PBFTShardedNetwork)this.network).migration);
+        System.out.println("After check : " + tx.getSender().getShardNumber() + " and "+ receiverShard);
+        if(((PBFTShardedNetwork)this.network).mainshardMigration == true && !tx.getSender().haveMigrated()){
+            // Check if migration to main shard is needed
+       //     System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getReceiver().getShardNumber());
+       //     System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+tx.getSender().getShardNumber());
+            boolean migrateMainShard = existingAccountsMigration.shouldMigrate(tx.getReceiver(), crossShardVector, tx.getSender().getShardNumber(),  ((PBFTShardedNetwork)this.network).mainshardMigration);
+            if (migrateMainShard) {
+                // Get the least loaded shard and migrate the account 
+                int leastLoadedShard = (((PBFTShardedNetwork)this.network).shardLoadTracker).getLeastLoadedShard();
+         //       System.out.println("1111111111111111111111111111111"+leastLoadedShard);
+                ((PBFTShardedNetwork)this.network).shardLoadTracker.updateLoad(leastLoadedShard, 1);     
+                migrationPolicy.migrateAccount(leastLoadedShard, tx.getSender());
+                }
+            }
+        }
+    }
+
+        // Method to initiate migration
+    public void initiateMigration(EthereumTx tx) {
+        // Broadcast migration request message to other nodes
+        broadcastMigrationRequest(tx);
+    }
+
+    // Method to broadcast migration request message to other nodes
+    private void broadcastMigrationRequest(EthereumTx tx) {
+        CoordinationMessage message = new CoordinationMessage(tx, "migration_request", this.node);
+        node.broadcastMessage(message);
+    }
+
+    private void processMigrationRequest(ArrayList<EthereumAccount> accountsInThisShard ,CoordinationMessage message, EthereumTx tx, Node from) {
+       
+          for (EthereumAccount account : accountsInThisShard) {
+            if (lockedAccounts.contains(account)) {
+                // if the account is locked, send a migration rejected message back to the client node
+                message = new CoordinationMessage(tx, "migration_rejected");
+                // IF THIS IS NODE 0, TELL ALL SHARD NODES TO SEND migration rejected
+                // node.sendMessageToNode(message, from);
+                if(thisID == 0){
+                    node.broadcastMessage(new CoordinationMessage(tx, "migration_request", this.node));
+                    ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+                    // FORCE MESSAGE
+                    for (PBFTShardedNode node : nodes) {
+                        node.sendMessageToNode(message, from);
+                    }
+                }
+                return;
+            }
+        }
+          for (EthereumAccount account : accountsInThisShard) {
+            lockedAccounts.add(account); 
+            lockedAccountsToTransactions.put(account, tx);
+            // account locking event
+            AccountLockingEvent event = new AccountLockingEvent(this.node.getSimulator().getSimulationTime(), account, this.node);
+            if(thisID == 0) this.node.getSimulator().putEvent(event, 0);
+        }
+        // send prepareOK message back to the client node
+        message = new CoordinationMessage(tx, "migration_approved");
+        // IF THIS IS NODE 0 TELL ALL SHARD NODES TO SEND PREPAREOK
+        // node.sendMessageToNode(message, from);
+        if(thisID == 0){
+            node.broadcastMessage(new CoordinationMessage(tx, "migration_request", this.node));
+            ArrayList<PBFTShardedNode> nodes = this.network.getShard(node.getShardNumber());
+            // FORCE MESSAGE
+            for (PBFTShardedNode node : nodes) {
+                node.sendMessageToNode(message, from);
+            }
+        }
+      
+    }
+
+
+    private void processMigrationApproval(CoordinationMessage message) {
+        EthereumTx tx = (EthereumTx) message.getData();
+        int receiverShard = tx.getReceiver().getShardNumber();
+        executeMigration(tx, receiverShard);
+      //  ((PBFTShardedNetwork)this.network).committedMigrations++;
+    }
+    
+    private void processMigrationRejection(CoordinationMessage message) {
+        EthereumTx tx = (EthereumTx) message.getData();
+        int receiverShard = tx.getReceiver().getShardNumber();
+        
+    }
+
+
+    private boolean isAccountInMigration(EthereumAccount account) {
+    // return true if the account is migrating, or migrated   
+        return accountsInMigration.contains(account);
     }
 
 
@@ -207,4 +380,15 @@ public class ClientLedCrossShardConsensus implements CrossShardConsensus {
         }
         return i == accounts.size();
     }
+
+
+    private int getReceiverShard( EthereumTx tx) {
+        for (int receiverShard : tx.getAllInvolvedShards() ) {
+            int receiverShards = receiverShard;
+            System.out.println("GETRECEIVEDSHARD FUNCTION" + receiverShards );
+            return receiverShard;
+        }
+        return 0;  
+    }
+
 }

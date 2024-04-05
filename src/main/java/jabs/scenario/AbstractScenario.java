@@ -1,5 +1,9 @@
 package jabs.scenario;
 
+import jabs.consensus.algorithm.ClientLedCrossShardConsensus;
+import jabs.consensus.algorithm.MigrationOfExistingAccounts;
+import jabs.consensus.algorithm.MigrationPolicy;
+import jabs.consensus.algorithm.ThresholdMigrationPolicy;
 import jabs.log.AbstractLogger;
 import jabs.network.networks.Network;
 import jabs.network.networks.sharded.PBFTShardedNetwork;
@@ -26,7 +30,10 @@ public abstract class AbstractScenario {
     protected List<AbstractLogger> loggers = new ArrayList<>();
     long progressMessageIntervals;
     final String name;
-
+    public ClientLedCrossShardConsensus clientLed;
+    public MigrationOfExistingAccounts mainShard;
+    public ThresholdMigrationPolicy thresholdMigrationPolicy;
+    
     /**
      * Returns the network of the scenario. This can be used for accessing nodes inside the network.
      * @return network of this scenario
@@ -142,10 +149,12 @@ public abstract class AbstractScenario {
         System.out.println("cross shard transactions generated: " + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions);
         int total = ((PBFTShardedNetwork)this.network).clientIntraShardTransactions + ((PBFTShardedNetwork)this.network).clientCrossShardTransactions;
         System.out.println("total transactions generated: " + total);
-
+        System.out.println("Account Migration Count: " + ((PBFTShardedNetwork)this.network).MigrationCounts);
         // System.out.println("Failures: " + ((PBFTShardedNetwork)this.network).failures);
         System.out.println("Committed transactions: " + ((PBFTShardedNetwork)this.network).committedTransactions);
-
+        if(((PBFTShardedNetwork)this.network).MigrationCounts != 0) {
+            System.out.println("POLICIES USED :" + ((PBFTShardedNetwork)this.network).Policy );
+            }
         // System.out.println("For testing purposes, only cross shard txs are sent to the network");
 
         System.err.printf("Finished %s.\n", this.name);

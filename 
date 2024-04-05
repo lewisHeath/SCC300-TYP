@@ -1,0 +1,344 @@
+[33mcommit dd8215d86606e8c638f4b7be39348ba972a94545[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfirst[m[33m)[m
+Author: obeyyyy <oubaye.ghammate@gmail.com>
+Date:   Thu Mar 7 15:47:18 2024 +0000
+
+    Migration of new accounts policy added
+
+[1mdiff --git a/evaluation/MigrationPlot.py b/evaluation/MigrationPlot.py[m
+[1mindex 3db47de..370c7b6 100644[m
+[1m--- a/evaluation/MigrationPlot.py[m
+[1m+++ b/evaluation/MigrationPlot.py[m
+[36m@@ -1,39 +1,36 @@[m
+ import pandas as pd[m
+ import matplotlib.pyplot as plt[m
+ [m
+[31m-# Load the without migration data to count its number of rows[m
+[31m-df_without_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-WithoutMigrations-2s10n800c.csv')[m
+[31m-num_rows_without_migration = len(df_without_migration)[m
+[32m+[m[32m# Load the without migration data[m
+[32m+[m[32mdf_without_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/Clientled-WithoutMigrations-10s10n800c.csv')[m
+ [m
+ # Load the migration data[m
+[31m-df_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-2s10n800c.csv')[m
+[31m-[m
+[31m-# Add empty rows to the migration data to match the number of rows in the without migration data[m
+[31m-num_rows_to_add = num_rows_without_migration - len(df_migration)[m
+[31m-if num_rows_to_add > 0:[m
+[31m-    empty_rows = pd.DataFrame([[None] * len(df_migration.columns)] * num_rows_to_add, columns=df_migration.columns)[m
+[31m-    df_migration = pd.concat([df_migration, empty_rows], ignore_index=True)[m
+[32m+[m[32mdf_migration = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/Clientled-Migrations-10s10n800c.csv')[m
+ [m
+ # Convert columns to numeric, handling non-numeric values[m
+ numeric_cols = ['CrossShard Transactions', 'IntraShard Transactions', 'Simulation Time'][m
+ df_migration[numeric_cols] = df_migration[numeric_cols].apply(pd.to_numeric, errors='coerce')[m
+ df_without_migration[numeric_cols] = df_without_migration[numeric_cols].apply(pd.to_numeric, errors='coerce')[m
+ [m
+[31m-# Calculate the total transactions for each chunk[m
+[32m+[m[32m# Calculate the total transactions for each scenario[m
+[32m+[m[32mcrossShard_migration = df_migration['CrossShard Transactions'].sum()[m
+[32m+[m[32mintraShard_migration = df_migration['IntraShard Transactions'].sum()[m
+[32m+[m[32mcrossShard_without_migration = df_without_migration['CrossShard Transactions'].sum()[m
+[32m+[m[32mintraShard_without_migration = df_without_migration['IntraShard Transactions'].sum()[m
+[32m+[m
+ # Plotting[m
+ fig, ax = plt.subplots()[m
+ [m
+[31m-# Bar plots for chunk with migrations[m
+[31m-ax.bar('With Migration - CrossShard', df_migration['CrossShard Transactions'].sum(), label='CrossShard Transactions')[m
+[31m-ax.bar('With Migration - IntraShard', df_migration['IntraShard Transactions'].sum(), label='IntraShard Transactions')[m
+[32m+[m[32m# Stacked bars for with and without migrations[m
+[32m+[m[32max.bar('With Migration', crossShard_migration, label='CrossShard Transactions', color='blue')[m
+[32m+[m[32max.bar('With Migration', intraShard_migration, bottom=crossShard_migration, label='IntraShard Transactions', color='red')[m
+ [m
+[31m-# Bar plots for chunk without migrations[m
+[31m-ax.bar('Without Migration - CrossShard', df_without_migration['CrossShard Transactions'].sum(), label='CrossShard Transactions')[m
+[31m-ax.bar('Without Migration - IntraShard', df_without_migration['IntraShard Transactions'].sum(), label='IntraShard Transactions')[m
+[32m+[m[32max.bar('Without Migration', crossShard_without_migration, label='CrossShard Transactions', color='blue')[m
+[32m+[m[32max.bar('Without Migration', intraShard_without_migration, bottom=crossShard_without_migration, label='IntraShard Transactions', color='red')[m
+ [m
+ ax.set_ylabel('Number of Transactions')[m
+[31m-ax.set_xlabel('Migration')[m
+[31m-ax.set_title('CrossShard and IntraShard Transactions with and without Migrations')[m
+[32m+[m[32max.set_xlabel('Migration Scenario')[m
+[32m+[m[32max.set_title('Transaction Distribution with and without Migrations')[m
+ ax.legend()[m
+ [m
+[31m-plt.show()[m
+\ No newline at end of file[m
+[32m+[m[32mplt.show()[m
+[1mdiff --git a/evaluation/amountOfCrossShardTxs.py b/evaluation/amountOfCrossShardTxs.py[m
+[1mindex d98a3d8..9294f56 100644[m
+[1m--- a/evaluation/amountOfCrossShardTxs.py[m
+[1m+++ b/evaluation/amountOfCrossShardTxs.py[m
+[36m@@ -2,7 +2,7 @@[m [mimport pandas as pd[m
+ import matplotlib.pyplot as plt[m
+ [m
+ # Load the data[m
+[31m-df = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-5s10n800c.csv')[m
+[32m+[m[32mdf = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Migrations-16s10n400c.csv')[m
+ [m
+ [m
+ # Plotting[m
+[1mdiff --git a/evaluation/clientledThroughput.py b/evaluation/clientledThroughput.py[m
+[1mindex b7b63d9..1f1c098 100644[m
+[1m--- a/evaluation/clientledThroughput.py[m
+[1m+++ b/evaluation/clientledThroughput.py[m
+[36m@@ -41,7 +41,7 @@[m [mdef process_csv(df, nameOfFile):[m
+ # import the data[m
+ df_2_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv')[m
+ df_4_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv')[m
+[31m-df_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n800c.csv')[m
+[32m+[m[32mdf_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponent2.6/seed1/Clientled-CommittedLogger-10s10n800c.csv')[m
+ [m
+ [m
+ [m
+[36m@@ -51,7 +51,7 @@[m [mdf_8_shard_clientled = pd.read_csv('output/tenNodesSimulations/clientled/exponen[m
+ [m
+ df_2_shard_clientled = process_csv(df_2_shard_clientled, '2 Shard Clientled')[m
+ df_4_shard_clientled = process_csv(df_4_shard_clientled, '4 Shard Clientled')[m
+[31m-df_8_shard_clientled = process_csv(df_8_shard_clientled, '8 Shard Clientled')[m
+[32m+[m[32mdf_8_shard_clientled = process_csv(df_8_shard_clientled, '10 Shard Clientled')[m
+ [m
+ [m
+ # Create a figure and axis object[m
+[36m@@ -61,7 +61,7 @@[m [mfig, ax = plt.subplots()[m
+ ax.plot(['Time'], ['CumulativeCommittedTxs'], label='1 Shard Clientled')[m
+ ax.plot(df_2_shard_clientled['Time'], df_2_shard_clientled['CumulativeCommittedTxs'], label='2 Shards Clientled')[m
+ ax.plot(df_4_shard_clientled['Time'], df_4_shard_clientled['CumulativeCommittedTxs'], label='4 Shards Clientled')[m
+[31m-ax.plot(df_8_shard_clientled['Time'], df_8_shard_clientled['CumulativeCommittedTxs'], label='8 Shards Clientled')[m
+[32m+[m[32max.plot(df_8_shard_clientled['Time'], df_8_shard_clientled['CumulativeCommittedTxs'], label='10 Shards Clientled')[m
+ [m
+ # ax.plot(df_128_shard_clientled['Time'], df_128_shard_clientled['CumulativeCommittedTxs'], label='128 Shard Clientled')[m
+ # ax.plot(df_256_shard_clientled['Time'], df_256_shard_clientled['CumulativeCommittedTxs'], label='256 Shard Clientled')[m
+[1mdiff --git a/output/16Shards-10000Accounts-1hrs40min_Simulation-1.2exponent-5nodes.png b/output/16Shards-10000Accounts-1hrs40min_Simulation-1.2exponent-5nodes.png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7149486[m
+Binary files /dev/null and b/output/16Shards-10000Accounts-1hrs40min_Simulation-1.2exponent-5nodes.png differ
+[1mdiff --git a/output/16Shards-10000Accounts-1hrs40min_Simulation-1.2exponent-5nodes_(2).png b/output/16Shards-10000Accounts-1hrs40min_Simulation-1.2exponent-5nodes_(2).png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..51758e3[m
+Binary files /dev/null and b/output/16Shards-10000Accounts-1hrs40min_Simulation-1.2exponent-5nodes_(2).png differ
+[1mdiff --git a/output/16Shards-100Accounts-1hrs40min_Simulation-1.8exponent-5nodes_MainShardPolicy.png b/output/16Shards-100Accounts-1hrs40min_Simulation-1.8exponent-5nodes_MainShardPolicy.png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..be927f7[m
+Binary files /dev/null and b/output/16Shards-100Accounts-1hrs40min_Simulation-1.8exponent-5nodes_MainShardPolicy.png differ
+[1mdiff --git a/output/5Shards-100Accounts-1hrs40min_Simulation-1.8exponent-5nodes_MainShardPolicy.png b/output/5Shards-100Accounts-1hrs40min_Simulation-1.8exponent-5nodes_MainShardPolicy.png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..a55cf72[m
+Binary files /dev/null and b/output/5Shards-100Accounts-1hrs40min_Simulation-1.8exponent-5nodes_MainShardPolicy.png differ
+[1mdiff --git a/output/8Shards-100Accounts-6hrs_Simulation-1.8exponent-5nodes.png b/output/8Shards-100Accounts-6hrs_Simulation-1.8exponent-5nodes.png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ddfcb69[m
+Binary files /dev/null and b/output/8Shards-100Accounts-6hrs_Simulation-1.8exponent-5nodes.png differ
+[1mdiff --git a/output/Cross-Shard_and_Intra-Shard_Transactions_over_Time,_with_Main_Shard_policy-16_shards-1hr40min-5nodes-100accounts).png b/output/Cross-Shard_and_Intra-Shard_Transactions_over_Time,_with_Main_Shard_policy-16_shards-1hr40min-5nodes-100accounts).png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5318ac2[m
+Binary files /dev/null and b/output/Cross-Shard_and_Intra-Shard_Transactions_over_Time,_with_Main_Shard_policy-16_shards-1hr40min-5nodes-100accounts).png differ
+[1mdiff --git a/output/Cross-Shard_and_Intra-Shard_Transactions_over_Time,_with_Main_Shard_policy-8_shards-1hr40min-5nodes-100accounts).png b/output/Cross-Shard_and_Intra-Shard_Transactions_over_Time,_with_Main_Shard_policy-8_shards-1hr40min-5nodes-100accounts).png[m
+[1mnew file mode 100644[m
+[1mindex 0000000..9fd3b30[m
+Binary files /dev/null and b/output/Cross-Shard_and_Intra-Shard_Transactions_over_Time,_with_Main_Shard_policy-8_shards-1hr40min-5nodes-100accounts).png differ
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..274e600[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:ab3515991fdb74932a587c5615c8d597a313f956e1594085ddd06712031093a7[m
+[32m+[m[32msize 1887169[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n800c.csv[m
+[1mindex 57eccb1..630b77d 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-16s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:d073c00b1c46835f76e0b75b1090ff0e6fc47af7e67118f55499814b19e7e40c[m
+[31m-size 2800638[m
+[32m+[m[32moid sha256:b00b6b6b8eae6a9f7fd42bef5906a945003b1dd0e92eee2a904b833b6e7f547a[m
+[32m+[m[32msize 2935585[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-2s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-2s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..b75c383[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-2s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:c2ea73a55bc88403fb5317af5d42a85548e52c039d46d09dee33657c3a432fb8[m
+[32m+[m[32msize 376572[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-2s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-2s10n800c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c21f574[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-2s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:594a2f234295584c901adae15e6f898a02440588c5664c754ef8b0e82dbb576c[m
+[32m+[m[32msize 385024[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..bb928ec[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:4456b7623fa21f9b941fc82e86292df5e4b2447fb03a735a11a2454b3dd88915[m
+[32m+[m[32msize 2217932[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n800c.csv[m
+[1mindex e69de29..04e7436 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-32s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:552f67b564e5928ec05e4f7905ea820a519271b68b7c5bc2877acd2ac39248a0[m
+[32m+[m[32msize 1376256[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-4s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-4s10n800c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2f8abd2[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-4s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:688c8fbd746142cc9d9aef9d9016dfdb1920a8d74a603066ea8c219f5126f562[m
+[32m+[m[32msize 1048932[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-5s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-5s10n800c.csv[m
+[1mindex f0a3090..3185466 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-5s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-5s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:24d8898a29a35bc655878c6ec036efa831927a4380a1ea2b904f8e58766b8bde[m
+[31m-size 1695744[m
+[32m+[m[32moid sha256:d2e857ce7b161bb5ebb31b39cc89b6e6b2524fd2ce9d52171d7180022b9c621f[m
+[32m+[m[32msize 3571539[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-8s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-8s10n800c.csv[m
+[1mindex d309b4f..62f1a6e 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-8s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-AbortedLogger-8s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:8bd03724b08fe6f6d9d7208e8a7002f553d589360d49e50acf4b05a8420a0a63[m
+[31m-size 7474054[m
+[32m+[m[32moid sha256:f0f1e92014ce46aa9f97bec2091099c51062660d007f8eed41fa50df2e2c9e41[m
+[32m+[m[32msize 1670245[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7ae14e1[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:a1c1267c3dead8bd819611a657537a3fde13697d4faa6a9285e3aaf742031704[m
+[32m+[m[32msize 150460[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n800c.csv[m
+[1mindex 997d059..dc72e2e 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-16s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:33b7e42fef5bd4be56f40ea3fef217b924775b8b6378b6bea2281af712d75d82[m
+[31m-size 23853[m
+[32m+[m[32moid sha256:631ba213be32013a88c4a087daa6caf0a15d8fb5f584e2188aa9bb1f29349621[m
+[32m+[m[32msize 30680[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5c5142e[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:8f625f2e4ab7b697ac5282510c29d30fed085e4ac5bdcd8ec838f720cc3aca4c[m
+[32m+[m[32msize 39078[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..57ad1b5[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-2s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:27cf442acf167d1b8df046608ba938f5a922324ee722d7e8ea956bd9a32426cb[m
+[32m+[m[32msize 8192[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..1c8601c[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:cd541d8b2760b6670a9685418ec06f7c992dee8c489fb97840e6763c0df362e8[m
+[32m+[m[32msize 158241[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n800c.csv[m
+[1mindex e69de29..74f5c1b 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-32s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:2f6be7d0ed2d2a50374d41de3c8a54b1871314108c6d4af131b2e4b14e03f7e3[m
+[32m+[m[32msize 24576[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2ae64d0[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-4s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:342c743c9d46cfb984a982b1a4d2e9b685dce5d0627b3e4d449779bbe90d0ba8[m
+[32m+[m[32msize 10515[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-5s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-5s10n800c.csv[m
+[1mindex 9f17713..cc75953 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-5s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-5s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:281186bebb374783db06914aa30836332d93bc7d19104d1eb1e7cf5d1ecbd92f[m
+[31m-size 131072[m
+[32m+[m[32moid sha256:acde90af0199534a7681ff177e8df6ab91026df516c0d54218c123cfb9ac6083[m
+[32m+[m[32msize 136642[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n800c.csv[m
+[1mindex e39423f..e388ea5 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CommittedLogger-8s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:36819b5d27cca9ec0e3b70d1f4f0f6bf433692ddaa0a956036cda5b7dea7a69f[m
+[31m-size 242526[m
+[32m+[m[32moid sha256:91ae6e5c384636481a4887c05ceeb2cfa1624e2584670abefb70521cb719139d[m
+[32m+[m[32msize 81775[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..21f5054[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:48868d51591cd830d3e02cf2d18afb36b882f5a30b9874ec9501a6d02a03c4b4[m
+[32m+[m[32msize 3451750[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n800c.csv[m
+[1mindex 7d68f55..7023f11 100644[m
+[1m--- a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n800c.csv[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-16s10n800c.csv[m
+[36m@@ -1,3 +1,3 @@[m
+ version https://git-lfs.github.com/spec/v1[m
+[31m-oid sha256:1f6393daad5472643508cb9427734971c608fa308b440d2d2278843a9d18d480[m
+[31m-size 3407610[m
+[32m+[m[32moid sha256:7d69e27a6ee4186c8420fee40f6f6b7ee87fcf276d39a9151b11d9175f1448bd[m
+[32m+[m[32msize 6888596[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-2s10n400c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-2s10n400c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..3cb3bb1[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-2s10n400c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:99b1e74837f3fda48eb41d7321110f540c5990286e6195851990ecf28d215f15[m
+[32m+[m[32msize 3604127[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-2s10n800c.csv b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-2s10n800c.csv[m
+[1mnew file mode 100644[m
+[1mindex 0000000..de4d488[m
+[1m--- /dev/null[m
+[1m+++ b/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-CreationLogger-2s10n800c.csv[m
+[36m@@ -0,0 +1,3 @@[m
+[32m+[m[32mversion https://git-lfs.github.com/spec/v1[m
+[32m+[m[32moid sha256:20729b64fee12939f2138579c50f61fc850517be5b288f6e32ed16f752974b72[m
+[32m+[m[32msize 5423104[m
+[1mdiff --git a/output/tenNodesSimulations/clientled/exponent1.2/seed1/Clientled-Creatio
